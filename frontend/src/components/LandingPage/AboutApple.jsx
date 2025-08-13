@@ -1,9 +1,39 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { aboutService } from '../../services/contentService';
 
 const AboutApple = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const [aboutData, setAboutData] = useState({
+    mainHeading: 'Designed by engineers.',
+    subHeading: 'At CuBIT Dynamics, we create technology that works beautifully.',
+    description1: 'Our name reflects our expertise — Cu (Copper) represents the foundation of electronics, BIT signifies the digital realm, and Dynamics embodies our innovative spirit. We specialize in creating seamless integration between hardware and software, delivering solutions that are both powerful and elegant.',
+    description2: 'We blend electronics, software, and AI-driven solutions to transform complex challenges into elegant innovations. From IoT devices to smart automation systems, we\'re shaping the future of technology.',
+    imageUrl: ''
+  });
+
+  useEffect(() => {
+    fetchAboutData();
+  }, []);
+
+  const fetchAboutData = async () => {
+    try {
+      console.log('Fetching about data...');
+      const response = await aboutService.getAbout();
+      console.log('About data response:', response);
+      if (response.success) {
+        console.log('Setting about data:', response.data);
+        setAboutData(response.data);
+      } else {
+        console.log('API returned unsuccessful response, using default data');
+      }
+    } catch (error) {
+      console.error('Failed to fetch about data:', error);
+      console.log('Using default about data due to API error');
+      // Use default data if API fails - data is already set in useState
+    }
+  };
 
   return (
   <section id="about" className="bg-gray-50 py-16 lg:py-20">
@@ -18,10 +48,10 @@ const AboutApple = () => {
             className="space-y-4"
           >
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-thin text-gray-900 leading-tight tracking-tight">
-              Designed by engineers.
+              {aboutData.mainHeading}
             </h2>
             <p className="text-xl lg:text-2xl text-gray-500 font-light max-w-3xl mx-auto leading-relaxed">
-              At CuBIT Dynamics, we create technology that works beautifully.
+              {aboutData.subHeading}
             </p>
           </motion.div>
 
@@ -33,16 +63,31 @@ const AboutApple = () => {
             className="max-w-4xl mx-auto space-y-6"
           >
             <p className="text-lg lg:text-xl text-gray-600 leading-relaxed">
-              Our name reflects our expertise — <strong>Cu (Copper)</strong> represents the foundation of electronics, 
-              while <strong>BIT</strong> symbolizes the smallest unit of digital data. <strong>Dynamics</strong> signifies 
-              our adaptability in the ever-changing world of technology.
+              {aboutData.description1}
             </p>
             
             <p className="text-lg lg:text-xl text-gray-600 leading-relaxed">
-              We blend electronics, software, and AI-driven solutions to help businesses scale, 
-              optimize, and innovate with precision and simplicity.
+              {aboutData.description2}
             </p>
           </motion.div>
+
+          {/* Image Section */}
+          {aboutData.imageUrl && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex justify-center py-8"
+            >
+              <div className="relative max-w-2xl">
+                <img
+                  src={aboutData.imageUrl}
+                  alt="About CuBIT Dynamics"
+                  className="w-full h-64 lg:h-80 object-cover rounded-2xl shadow-lg"
+                />
+              </div>
+            </motion.div>
+          )}
 
           {/* Simple Visual Element */}
           {/* <motion.div

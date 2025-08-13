@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { productService } from '../../services/contentService';
 
 const ProductsApple = () => {
-    const products = [
+    const [products, setProducts] = useState([
         {
             id: 1,
             title: 'CuBIT IoT Pro',
             subtitle: 'Unbelievably smart. Incredibly connected.',
             backgroundImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&h=800&fit=crop&crop=center',
             textColor: 'text-white',
-            buttonColor: 'bg-blue-600 hover:bg-blue-700'
+            buttonColor: 'bg-blue-600 hover:bg-blue-700',
+            link: '#'
         },
         {
             id: 2,
@@ -16,7 +18,8 @@ const ProductsApple = () => {
             subtitle: 'Intelligence that adapts.',
             backgroundImage: 'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=1200&h=800&fit=crop&crop=center',
             textColor: 'text-white',
-            buttonColor: 'bg-purple-600 hover:bg-purple-700'
+            buttonColor: 'bg-purple-600 hover:bg-purple-700',
+            link: '#'
         },
         {
             id: 3,
@@ -24,17 +27,35 @@ const ProductsApple = () => {
             subtitle: 'Precision engineering. Infinite possibilities.',
             backgroundImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=1200&h=800&fit=crop&crop=center',
             textColor: 'text-white',
-            buttonColor: 'bg-orange-600 hover:bg-orange-700'
+            buttonColor: 'bg-orange-600 hover:bg-orange-700',
+            link: '#'
         },
         {
             id: 4,
-            title: 'Automation Pro',
-            subtitle: 'The future of efficiency.',
+            title: 'Smart Automation',
+            subtitle: 'The future of workflow.',
             backgroundImage: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&h=800&fit=crop&crop=center',
             textColor: 'text-white',
-            buttonColor: 'bg-indigo-600 hover:bg-indigo-700'
+            buttonColor: 'bg-green-600 hover:bg-green-700',
+            link: '#'
         }
-    ];
+    ]);
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    const fetchProducts = async () => {
+        try {
+            const response = await productService.getProducts();
+            if (response.success && response.data.length > 0) {
+                setProducts(response.data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch products:', error);
+            // Use default products if API fails
+        }
+    };
 
     return (
         <div className="w-full py-12 lg:py-16 bg-gray-50">
