@@ -1,0 +1,43 @@
+<!-- This is a placeholder SVG image for Product 1 - IoT Device -->
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0891b2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f8fafc"/>
+  
+  <!-- Main Device Body -->
+  <rect x="120" y="80" width="160" height="120" rx="12" fill="url(#grad1)"/>
+  
+  <!-- Screen -->
+  <rect x="140" y="100" width="120" height="80" rx="4" fill="#1e293b"/>
+  
+  <!-- Indicator Lights -->
+  <circle cx="145" cy="110" r="3" fill="#10b981"/>
+  <circle cx="155" cy="110" r="3" fill="#f59e0b"/>
+  <circle cx="165" cy="110" r="3" fill="#ef4444"/>
+  
+  <!-- Antenna -->
+  <line x1="200" y1="80" x2="200" y2="50" stroke="#64748b" stroke-width="3"/>
+  <circle cx="200" cy="45" r="4" fill="#64748b"/>
+  
+  <!-- Connection Lines -->
+  <path d="M 50 150 Q 120 120 140 140" stroke="url(#grad2)" stroke-width="2" fill="none"/>
+  <path d="M 350 150 Q 280 120 260 140" stroke="url(#grad2)" stroke-width="2" fill="none"/>
+  
+  <!-- Connected Devices -->
+  <circle cx="50" cy="150" r="15" fill="url(#grad2)"/>
+  <circle cx="350" cy="150" r="15" fill="url(#grad2)"/>
+  
+  <!-- Text -->
+  <text x="200" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#475569">Smart IoT Device</text>
+  <text x="200" y="260" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#64748b">Connected • Intelligent • Secure</text>
+</svg>

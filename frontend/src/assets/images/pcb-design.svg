@@ -1,0 +1,90 @@
+<!-- This is a placeholder SVG image for Product 3 - Circuit Board -->
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="circuitGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="circuitGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#14b8a6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d9488;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#1e293b"/>
+  
+  <!-- PCB Base -->
+  <rect x="50" y="50" width="300" height="200" rx="8" fill="#047857"/>
+  
+  <!-- Circuit Traces -->
+  <g stroke="url(#circuitGrad2)" stroke-width="3" fill="none">
+    <!-- Horizontal traces -->
+    <line x1="70" y1="100" x2="330" y2="100"/>
+    <line x1="70" y1="150" x2="330" y2="150"/>
+    <line x1="70" y1="200" x2="330" y2="200"/>
+    
+    <!-- Vertical traces -->
+    <line x1="120" y1="70" x2="120" y2="230"/>
+    <line x1="200" y1="70" x2="200" y2="230"/>
+    <line x1="280" y1="70" x2="280" y2="230"/>
+  </g>
+  
+  <!-- Components -->
+  <!-- Microprocessor -->
+  <rect x="170" y="120" width="60" height="60" rx="4" fill="#1f2937"/>
+  <rect x="175" y="125" width="50" height="50" rx="2" fill="#374151"/>
+  
+  <!-- Capacitors -->
+  <rect x="90" y="140" width="15" height="20" rx="2" fill="#fbbf24"/>
+  <rect x="90" y="165" width="15" height="20" rx="2" fill="#fbbf24"/>
+  
+  <!-- Resistors -->
+  <rect x="250" y="85" width="20" height="8" rx="2" fill="#ef4444"/>
+  <rect x="250" y="205" width="20" height="8" rx="2" fill="#ef4444"/>
+  
+  <!-- LEDs -->
+  <circle cx="120" cy="100" r="6" fill="#10b981"/>
+  <circle cx="200" cy="100" r="6" fill="#3b82f6"/>
+  <circle cx="280" cy="100" r="6" fill="#ef4444"/>
+  
+  <!-- Connectors -->
+  <rect x="60" y="90" width="8" height="30" rx="2" fill="#6b7280"/>
+  <rect x="60" y="140" width="8" height="30" rx="2" fill="#6b7280"/>
+  <rect x="60" y="190" width="8" height="30" rx="2" fill="#6b7280"/>
+  
+  <!-- IC Pins -->
+  <g fill="#9ca3af">
+    <!-- Top pins -->
+    <rect x="175" y="115" width="3" height="8"/>
+    <rect x="185" y="115" width="3" height="8"/>
+    <rect x="195" y="115" width="3" height="8"/>
+    <rect x="205" y="115" width="3" height="8"/>
+    <rect x="215" y="115" width="3" height="8"/>
+    <rect x="225" y="115" width="3" height="8"/>
+    
+    <!-- Bottom pins -->
+    <rect x="175" y="185" width="3" height="8"/>
+    <rect x="185" y="185" width="3" height="8"/>
+    <rect x="195" y="185" width="3" height="8"/>
+    <rect x="205" y="185" width="3" height="8"/>
+    <rect x="215" y="185" width="3" height="8"/>
+    <rect x="225" y="185" width="3" height="8"/>
+  </g>
+  
+  <!-- Via holes -->
+  <g fill="#065f46">
+    <circle cx="100" cy="80" r="2"/>
+    <circle cx="150" cy="80" r="2"/>
+    <circle cx="250" cy="80" r="2"/>
+    <circle cx="300" cy="80" r="2"/>
+    <circle cx="100" cy="220" r="2"/>
+    <circle cx="150" cy="220" r="2"/>
+    <circle cx="250" cy="220" r="2"/>
+    <circle cx="300" cy="220" r="2"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="200" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#ffffff">Custom PCB Design</text>
+  <text x="200" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#10b981">Precision • Reliability • Innovation</text>
+</svg>

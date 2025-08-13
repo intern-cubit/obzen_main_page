@@ -1,0 +1,131 @@
+/* Import San Francisco font (Apple's font) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #ffffff;
+  }
+  
+  /* Custom scrollbar - Apple style */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* Apple-style glassmorphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Apple-style buttons */
+  .btn-primary {
+    background: #007AFF;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .btn-primary:hover {
+    background: #0056CC;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  }
+  
+  .btn-secondary {
+    background: transparent;
+    color: #007AFF;
+    border: 1px solid rgba(0, 122, 255, 0.3);
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .btn-secondary:hover {
+    background: rgba(0, 122, 255, 0.1);
+    border-color: #007AFF;
+  }
+}
+
+@layer utilities {
+  /* Apple-style text styles */
+  .text-apple-title {
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  
+  .text-apple-subtitle {
+    font-size: clamp(1.25rem, 3vw, 2rem);
+    font-weight: 400;
+    line-height: 1.3;
+    color: #86868b;
+  }
+  
+  .text-apple-body {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: #1d1d1f;
+  }
+  
+  /* Apple-style shadows */
+  .shadow-apple {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  }
+  
+  .shadow-apple-hover {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Animation utilities */
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out;
+  }
+  
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
