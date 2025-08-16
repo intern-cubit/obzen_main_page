@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Plus, Edit2, Trash2, Eye, EyeOff, Upload, User } from 'lucide-react';
+import { Star, Plus, Edit2, Trash2, Eye, EyeOff, Upload, User, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { reviewService, uploadService } from '../../services/contentService';
 
@@ -58,6 +58,7 @@ const ReviewsAdmin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -230,6 +231,70 @@ const ReviewsAdmin = () => {
     ));
   };
 
+  const PreviewModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">Reviews Preview</h3>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="p-8 bg-white">
+          {/* Apple-style preview matching ReviewsApple component */}
+          <div className="text-center mb-16">
+            <h2 className="text-4xl lg:text-5xl font-thin text-gray-900 mb-4">
+              Loved by innovators.
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              See what industry leaders say about working with CuBIT Dynamics.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {reviews.filter(review => review.isActive).map((review) => (
+              <div key={review._id} className="bg-gray-50 rounded-2xl p-8">
+                <div className="flex items-center mb-6">
+                  <img
+                    src={review.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.name)}&background=3b82f6&color=fff&size=64`}
+                    alt={review.name}
+                    className="w-16 h-16 rounded-full object-cover mr-4"
+                  />
+                  <div>
+                    <h4 className="font-semibold text-gray-900">{review.name}</h4>
+                    <p className="text-sm text-gray-600">{review.position}</p>
+                    <p className="text-sm text-gray-500">{review.company}</p>
+                  </div>
+                </div>
+                
+                <div className="flex mb-4">
+                  {renderStars(review.rating)}
+                </div>
+                
+                <p className="text-gray-700 leading-relaxed">
+                  "{review.content}"
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {reviews.filter(review => review.isActive).length === 0 && (
+            <div className="text-center py-12">
+              <Star className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No active reviews to display</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -246,21 +311,30 @@ const ReviewsAdmin = () => {
             <Star className="h-6 w-6 text-blue-600 mr-2" />
             <h2 className="text-xl font-semibold text-gray-900">Reviews Management</h2>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Review
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowPreview(true)}
+              className="flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Review
+            </button>
+          </div>
         </div>
 
         {/* Reviews Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {reviews.map((review) => (
-            <div key={review._id} className="border border-gray-200 rounded-lg p-6">
+            <div key={review._id} className="border border-gray-200 rounded-lg p-6 bg-gray-50">
               <div className="flex items-start space-x-4 mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
                   {review.avatar ? (
                     <img 
                       src={review.avatar} 
@@ -285,7 +359,7 @@ const ReviewsAdmin = () => {
                 <span className="ml-2 text-sm text-gray-600">({review.rating}/5)</span>
               </div>
 
-              <p className="text-gray-700 text-sm mb-4 line-clamp-3">{review.content}</p>
+              <p className="text-gray-700 text-sm mb-4 leading-relaxed">"{review.content}"</p>
 
               <div className="flex items-center justify-between mb-4">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -302,6 +376,7 @@ const ReviewsAdmin = () => {
                 <button
                   onClick={() => handleEdit(review)}
                   className="flex-1 flex items-center justify-center px-3 py-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
+                  disabled={review.isDefault}
                 >
                   <Edit2 className="h-4 w-4 mr-1" />
                   Edit
@@ -309,16 +384,24 @@ const ReviewsAdmin = () => {
                 <button
                   onClick={() => handleToggle(review._id)}
                   className="flex items-center justify-center px-3 py-2 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 transition-colors"
+                  disabled={review.isDefault}
                 >
                   {review.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
                 <button
                   onClick={() => handleDelete(review._id)}
                   className="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                  disabled={review.isDefault}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
+
+              {review.isDefault && (
+                <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                  Default review - Cannot be edited or deleted
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -331,7 +414,10 @@ const ReviewsAdmin = () => {
         )}
       </div>
 
-      {/* Modal */}
+      {/* Preview Modal */}
+      {showPreview && <PreviewModal />}
+
+      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">

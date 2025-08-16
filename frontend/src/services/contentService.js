@@ -180,6 +180,11 @@ export const contactService = {
     const response = await api.put('/contact', data);
     return response.data;
   },
+
+  createContact: async (data) => {
+    const response = await api.put('/contact', data);
+    return response.data;
+  },
 };
 
 export const uploadService = {

@@ -4,12 +4,16 @@ const contactSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    default: 'Let\'s create something extraordinary together.'
+    default: 'Get in touch.'
   },
   subtitle: {
     type: String,
     required: true,
-    default: 'Ready to transform your vision into reality?'
+    default: 'Ready to build something extraordinary?'
+  },
+  description: {
+    type: String,
+    default: 'Our team is available 24/7 to discuss your project needs. We typically respond within 2 hours during business days.'
   },
   email: {
     type: String,
@@ -24,9 +28,13 @@ const contactSchema = new mongoose.Schema({
   address: {
     type: String,
     required: true,
-    default: '123 Innovation Drive, Tech Valley, CA 94000'
+    default: 'Innovation Hub\nTech District, San Francisco'
   },
-  socialLinks: {
+  workingHours: {
+    type: String,
+    default: 'Monday - Friday: 9:00 AM - 6:00 PM'
+  },
+  socialMedia: {
     linkedin: {
       type: String,
       default: 'https://linkedin.com/company/cubit-dynamics'
@@ -35,9 +43,13 @@ const contactSchema = new mongoose.Schema({
       type: String,
       default: 'https://twitter.com/cubitdynamics'
     },
-    github: {
+    instagram: {
       type: String,
-      default: 'https://github.com/cubitdynamics'
+      default: ''
+    },
+    facebook: {
+      type: String,
+      default: ''
     }
   }
 }, {

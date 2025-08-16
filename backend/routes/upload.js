@@ -24,8 +24,13 @@ router.post('/single', authMiddleware, upload.single('file'), async (req, res) =
     }
 
     console.log('Uploading to Cloudinary...');
+    
+    // Get upload type from request body for folder organization
+    const uploadType = req.body.type || 'general';
+    const folderName = `cubit-dynamics/${uploadType}`;
+    
     // Upload to Cloudinary
-    const result = await uploadToCloudinary(req.file.buffer, 'cubit-dynamics');
+    const result = await uploadToCloudinary(req.file.buffer, folderName);
     console.log('Cloudinary upload successful:', result.secure_url);
 
     res.json({
@@ -60,9 +65,11 @@ router.post('/multiple', authMiddleware, upload.array('files', 5), async (req, r
       });
     }
 
-    const uploadPromises = req.files.map(file => 
-      uploadToCloudinary(file.buffer, 'cubit-dynamics')
-    );
+    const uploadPromises = req.files.map(file => {
+      const uploadType = req.body.type || 'general';
+      const folderName = `cubit-dynamics/${uploadType}`;
+      return uploadToCloudinary(file.buffer, folderName);
+    });
 
     const results = await Promise.all(uploadPromises);
 

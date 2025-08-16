@@ -59,8 +59,8 @@ router.put('/', [
     } else {
       // Update fields
       Object.keys(req.body).forEach(key => {
-        if (key === 'socialLinks' && typeof req.body[key] === 'object') {
-          contact.socialLinks = { ...contact.socialLinks, ...req.body[key] };
+        if (key === 'socialMedia' && typeof req.body[key] === 'object') {
+          contact.socialMedia = { ...contact.socialMedia, ...req.body[key] };
         } else {
           contact[key] = req.body[key];
         }

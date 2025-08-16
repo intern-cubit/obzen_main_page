@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, Eye, Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
 import { contactService } from '../../services/contentService';
 import toast from 'react-hot-toast';
 
@@ -71,14 +71,8 @@ const ContactAdmin = () => {
     }
 
     try {
-      let response;
-      if (contactInfo) {
-        response = await contactService.updateContact(contactInfo._id, formData);
-        toast.success('Contact information updated successfully');
-      } else {
-        response = await contactService.createContact(formData);
-        toast.success('Contact information created successfully');
-      }
+      const response = await contactService.updateContact(formData);
+      toast.success('Contact information saved successfully');
 
       if (response.success) {
         setContactInfo(response.data);
@@ -103,8 +97,8 @@ const ContactAdmin = () => {
 
   const PreviewModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-lg max-w-7xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h3 className="text-2xl font-bold">Contact Section Preview</h3>
           <button
             onClick={() => setShowPreview(false)}
@@ -114,164 +108,126 @@ const ContactAdmin = () => {
           </button>
         </div>
         
-        <div className="space-y-8">
-          <div className="text-center">
-            <h2 className="text-4xl lg:text-5xl font-thin text-gray-900 mb-4">
-              {formData.title || 'Get in Touch'}
-            </h2>
-            <h3 className="text-2xl text-blue-600 mb-6">
-              {formData.subtitle || 'Ready to innovate?'}
-            </h3>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {formData.description || 'Let\'s discuss how we can help transform your business.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Contact Form Preview */}
-            <div className="bg-gray-50 rounded-2xl p-8">
-              <h4 className="text-2xl font-semibold text-gray-900 mb-6">Send us a message</h4>
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      First Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="John"
-                      disabled
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Last Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Doe"
-                      disabled
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="john.doe@example.com"
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message
-                  </label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Tell us about your project..."
-                    disabled
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                  disabled
-                >
-                  Send Message
-                </button>
-              </form>
+        {/* Apple-style Contact Section Preview */}
+        <section className="bg-white py-16 lg:py-20">
+          <div className="max-w-4xl mx-auto px-4 lg:px-8">
+            
+            {/* Header */}
+            <div className="text-center mb-12 lg:mb-16">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-thin text-gray-900 mb-3 tracking-tight">
+                {formData.title || 'Get in touch.'}
+              </h2>
+              <p className="text-lg lg:text-xl text-gray-500 font-light">
+                {formData.subtitle || 'Ready to build something extraordinary?'}
+              </p>
             </div>
 
-            {/* Contact Information Preview */}
-            <div className="space-y-8">
-              <div>
-                <h4 className="text-2xl font-semibold text-gray-900 mb-6">Contact Information</h4>
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+              
+              {/* Contact Information */}
+              <div className="space-y-8">
+                
+                {/* Contact Methods */}
                 <div className="space-y-6">
-                  {formData.email && (
-                    <div className="flex items-start">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                        <span className="text-blue-600 text-xl">📧</span>
-                      </div>
-                      <div>
-                        <h5 className="font-semibold text-gray-900">Email</h5>
-                        <p className="text-gray-600">{formData.email}</p>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-5 h-5 mt-0.5">
+                      <Mail className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <div className="text-base font-normal text-gray-900 mb-0.5">Email</div>
+                      <div className="text-sm text-gray-500 font-light">{formData.email || 'hello@cubitdynamics.com'}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="w-5 h-5 mt-0.5">
+                      <Phone className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <div className="text-base font-normal text-gray-900 mb-0.5">Phone</div>
+                      <div className="text-sm text-gray-500 font-light">{formData.phone || '+1 (555) 123-4567'}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div className="w-5 h-5 mt-0.5">
+                      <MapPin className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div>
+                      <div className="text-base font-normal text-gray-900 mb-0.5">Office</div>
+                      <div className="text-sm text-gray-500 font-light">
+                        {formData.address || 'Innovation Hub, Tech District, San Francisco'}
                       </div>
                     </div>
-                  )}
-                  
-                  {formData.phone && (
-                    <div className="flex items-start">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                        <span className="text-blue-600 text-xl">📞</span>
-                      </div>
-                      <div>
-                        <h5 className="font-semibold text-gray-900">Phone</h5>
-                        <p className="text-gray-600">{formData.phone}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.address && (
-                    <div className="flex items-start">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                        <span className="text-blue-600 text-xl">📍</span>
-                      </div>
-                      <div>
-                        <h5 className="font-semibold text-gray-900">Address</h5>
-                        <p className="text-gray-600">{formData.address}</p>
-                      </div>
-                    </div>
-                  )}
-                  
+                  </div>
+                </div>
+
+                {/* Availability Note */}
+                <div className="pt-6 border-t border-gray-100">
+                  <h4 className="text-base font-normal text-gray-900 mb-2">We're here to help</h4>
+                  <p className="text-sm text-gray-500 font-light leading-relaxed">
+                    {formData.description || 'Our team is available 24/7 to discuss your project needs. We typically respond within 2 hours during business days.'}
+                  </p>
                   {formData.workingHours && (
-                    <div className="flex items-start">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                        <span className="text-blue-600 text-xl">🕐</span>
-                      </div>
-                      <div>
-                        <h5 className="font-semibold text-gray-900">Working Hours</h5>
-                        <p className="text-gray-600">{formData.workingHours}</p>
-                      </div>
-                    </div>
+                    <p className="text-sm text-gray-500 font-light leading-relaxed mt-2">
+                      {formData.workingHours}
+                    </p>
                   )}
                 </div>
               </div>
 
-              {/* Social Media Links */}
+              {/* Contact Form */}
               <div>
-                <h5 className="font-semibold text-gray-900 mb-4">Follow Us</h5>
-                <div className="flex space-x-4">
-                  {formData.socialMedia?.linkedin && (
-                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm">Li</span>
-                    </div>
-                  )}
-                  {formData.socialMedia?.twitter && (
-                    <div className="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm">Tw</span>
-                    </div>
-                  )}
-                  {formData.socialMedia?.instagram && (
-                    <div className="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm">Ig</span>
-                    </div>
-                  )}
-                  {formData.socialMedia?.facebook && (
-                    <div className="w-10 h-10 bg-blue-800 rounded-lg flex items-center justify-center">
-                      <span className="text-white text-sm">Fb</span>
-                    </div>
-                  )}
+                <div className="space-y-4">
+                  
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Full name"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors duration-200 font-light"
+                      disabled
+                    />
+                  </div>
+
+                  <div>
+                    <input
+                      type="email"
+                      placeholder="Email address"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors duration-200 font-light"
+                      disabled
+                    />
+                  </div>
+
+                  <div>
+                    <textarea
+                      placeholder="Tell us about your project"
+                      rows={5}
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors duration-200 resize-none font-light"
+                      disabled
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="w-full py-3 px-6 rounded-full font-light text-base transition-all duration-200 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>Send message</span>
+                  </button>
                 </div>
               </div>
             </div>
+
+            {/* Bottom section */}
+            <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+              <p className="text-sm text-gray-500 font-light">
+                Prefer to talk? Call us at <span className="text-gray-900">{formData.phone || '+1 (555) 123-4567'}</span>
+              </p>
+            </div>
+
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

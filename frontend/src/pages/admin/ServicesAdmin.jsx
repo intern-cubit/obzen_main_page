@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, Eye } from 'lucide-react';
-import { serviceService } from '../../services/contentService';
+import { Plus, Edit, Trash2, Save, X, Eye, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
+import { serviceService, uploadService } from '../../services/contentService';
 import toast from 'react-hot-toast';
 
 const ServicesAdmin = () => {
@@ -9,9 +9,12 @@ const ServicesAdmin = () => {
   const [editingService, setEditingService] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
+    subtitle: '',
     description: '',
+    image: '',
     icon: '',
     features: ['']
   });
@@ -87,7 +90,9 @@ const ServicesAdmin = () => {
     setEditingService(service);
     setFormData({
       title: service.title,
+      subtitle: service.subtitle || '',
       description: service.description,
+      image: service.image || '',
       icon: service.icon || '',
       features: service.features.length > 0 ? service.features : ['']
     });
@@ -97,7 +102,9 @@ const ServicesAdmin = () => {
   const resetForm = () => {
     setFormData({
       title: '',
+      subtitle: '',
       description: '',
+      image: '',
       icon: '',
       features: ['']
     });
@@ -120,63 +127,210 @@ const ServicesAdmin = () => {
     setFormData({ ...formData, features: newFeatures });
   };
 
-  const PreviewModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold">Services Preview</h3>
-          <button
-            onClick={() => setShowPreview(false)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-        
-        <div className="space-y-8">
-          <div className="text-center">
-            <h2 className="text-4xl lg:text-5xl font-thin text-gray-900 mb-4">
-              Our Services
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Cutting-edge technology solutions tailored to your business needs.
-            </p>
-          </div>
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service, index) => (
-              <div key={service._id || index} className="group">
-                <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 group-hover:scale-105">
-                  <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-200 transition-colors">
-                    <span className="text-2xl">{service.icon || '🔧'}</span>
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (5MB limit for service images)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image file size should be less than 5MB');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const loadingToast = toast.loading('Uploading image...');
+
+      const response = await uploadService.uploadFile(file, 'services');
+      
+      if (response.success) {
+        const imageUrl = response.data.url;
+        setFormData({ ...formData, image: imageUrl });
+        toast.dismiss(loadingToast);
+        toast.success('Image uploaded successfully!');
+      } else {
+        toast.dismiss(loadingToast);
+        toast.error('Image upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.dismiss();
+      toast.error(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const PreviewModal = () => {
+    const [activePreviewService, setActivePreviewService] = useState(0);
+    
+    const nextPreviewService = () => {
+      setActivePreviewService((prev) => (prev + 1) % services.length);
+    };
+
+    const prevPreviewService = () => {
+      setActivePreviewService((prev) => (prev - 1 + services.length) % services.length);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8 max-w-7xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold">Services Preview</h3>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="bg-gray-50 rounded-lg p-8">
+            {/* Header */}
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl font-thin text-gray-900 mb-4 tracking-tight">
+                What we do.
+              </h2>
+              <p className="text-xl text-gray-500 font-light">
+                Technology that works beautifully.
+              </p>
+            </div>
+
+            {services.length > 0 ? (
+              <div className="relative">
+                {/* Service Cards Container */}
+                <div className="overflow-hidden">
+                  <div 
+                    className="flex transition-transform duration-700 ease-out"
+                    style={{ transform: `translateX(-${activePreviewService * 100}%)` }}
+                  >
+                    {services.map((service, index) => (
+                      <div key={service._id || index} className="w-full flex-shrink-0 px-6">
+                        <div className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
+                          
+                          {/* Content */}
+                          <div className="space-y-8 order-2 lg:order-1">
+                            <div className="space-y-3">
+                              <h3 className="text-3xl sm:text-4xl font-thin text-gray-900 tracking-tight">
+                                {service.title}
+                              </h3>
+                              <p className="text-xl text-gray-500 font-light">
+                                {service.subtitle || 'Professional service.'}
+                              </p>
+                            </div>
+                            
+                            <p className="text-lg text-gray-600 leading-relaxed font-light max-w-lg">
+                              {service.description}
+                            </p>
+                            
+                            <div className="flex gap-4 pt-2">
+                              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-base font-light transition-all duration-200">
+                                Learn more
+                              </button>
+                              <button className="text-blue-600 hover:text-blue-700 px-6 py-3 text-base font-light transition-colors duration-200">
+                                Get started →
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Image */}
+                          <div className="order-1 lg:order-2">
+                            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-200">
+                              {service.image ? (
+                                <img
+                                  src={service.image}
+                                  alt={service.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="text-4xl">{service.icon || '🔧'}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                    {service.title}
-                  </h3>
-                  
-                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                    {service.description}
-                  </p>
-                  
-                  {service.features && service.features.length > 0 && (
-                    <ul className="text-sm text-gray-500 space-y-1">
-                      {service.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center justify-center">
-                          <span className="w-1 h-1 bg-blue-500 rounded-full mr-2"></span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                 </div>
+
+                {/* Navigation Controls */}
+                {services.length > 1 && (
+                  <div className="flex items-center justify-center mt-12 space-x-8">
+                    
+                    {/* Previous Button */}
+                    <button
+                      onClick={prevPreviewService}
+                      className="w-12 h-12 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors duration-200 disabled:opacity-30"
+                      disabled={activePreviewService === 0}
+                    >
+                      <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+
+                    {/* Dots Indicator */}
+                    <div className="flex space-x-2">
+                      {services.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setActivePreviewService(index)}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            index === activePreviewService 
+                              ? 'bg-blue-600 scale-125' 
+                              : 'bg-gray-300 hover:bg-gray-400'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={nextPreviewService}
+                      className="w-12 h-12 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors duration-200 disabled:opacity-30"
+                      disabled={activePreviewService === services.length - 1}
+                    >
+                      <ChevronRight className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Service Labels */}
+                {services.length > 1 && (
+                  <div className="flex justify-center mt-8 overflow-hidden">
+                    <div className="flex space-x-6 text-sm">
+                      {services.map((service, index) => (
+                        <button
+                          key={service._id || index}
+                          onClick={() => setActivePreviewService(index)}
+                          className={`whitespace-nowrap px-3 py-2 rounded-full transition-all duration-300 font-light ${
+                            index === activePreviewService
+                              ? 'text-blue-600 bg-blue-50'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {service.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No services found. Create your first service!</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (isLoading) {
     return (
@@ -218,10 +372,13 @@ const ServicesAdmin = () => {
                   Service
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Subtitle
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Description
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Features
+                  Image
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -238,12 +395,24 @@ const ServicesAdmin = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900 max-w-xs truncate">{service.subtitle || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 max-w-xs truncate">{service.description}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500">
-                      {service.features ? service.features.length : 0} features
-                    </div>
+                    {service.image ? (
+                      <img 
+                        src={service.image} 
+                        alt={service.title}
+                        className="w-16 h-12 object-cover rounded border"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-500">No image</div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -294,6 +463,56 @@ const ServicesAdmin = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subtitle
+                </label>
+                <input
+                  type="text"
+                  value={formData.subtitle}
+                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Brief subtitle for the service"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Image
+                </label>
+                <div className="space-y-3">
+                  <div className="flex space-x-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {isUploading && (
+                      <div className="flex items-center px-3">
+                        <Upload className="h-4 w-4 animate-spin text-blue-500" />
+                      </div>
+                    )}
+                  </div>
+                  {formData.image && (
+                    <div className="mt-2">
+                      <img 
+                        src={formData.image} 
+                        alt="Preview" 
+                        className="w-32 h-24 object-cover rounded border"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  <p className="text-sm text-gray-500">
+                    Upload an image for the service (Max 5MB, JPG/PNG/GIF)
+                  </p>
+                </div>
               </div>
 
               <div>

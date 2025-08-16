@@ -5,9 +5,17 @@ const serviceSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  subtitle: {
+    type: String,
+    default: ''
+  },
   description: {
     type: String,
     required: true
+  },
+  image: {
+    type: String,
+    default: ''
   },
   icon: {
     type: String,

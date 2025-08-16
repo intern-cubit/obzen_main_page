@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { serviceService } from '../../services/contentService';
 
 const ServicesApple = () => {
   const [activeService, setActiveService] = useState(0);
+  const [apiServices, setApiServices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const services = [
     {
@@ -42,12 +45,47 @@ const ServicesApple = () => {
     }
   ];
 
+  // API Integration - Load services from backend if available
+  useEffect(() => {
+    fetchServicesFromAPI();
+  }, []);
+
+  const fetchServicesFromAPI = async () => {
+    try {
+      const response = await serviceService.getServices();
+      if (response.success && response.data.length > 0) {
+        // Transform API data to match the expected structure
+        const transformedServices = response.data.map((service, index) => ({
+          id: service._id || index + 1,
+          title: service.title,
+          subtitle: service.subtitle || 'Professional service.',
+          description: service.description,
+          image: service.image || services[index % services.length]?.image || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=600&fit=crop&crop=center'
+        }));
+        setApiServices(transformedServices);
+        console.log('Services loaded from API:', transformedServices);
+        setActiveService(0); // Reset to first service when new services load
+      } else {
+        setApiServices([]);
+        console.log('No services from API, using default services');
+      }
+    } catch (error) {
+      console.error('Failed to fetch services:', error);
+      setApiServices([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Use API services if available, otherwise use default hardcoded services
+  const displayServices = apiServices.length > 0 ? apiServices : services;
+
   const nextService = () => {
-    setActiveService((prev) => (prev + 1) % services.length);
+    setActiveService((prev) => (prev + 1) % displayServices.length);
   };
 
   const prevService = () => {
-    setActiveService((prev) => (prev - 1 + services.length) % services.length);
+    setActiveService((prev) => (prev - 1 + displayServices.length) % displayServices.length);
   };
 
   return (
@@ -64,16 +102,22 @@ const ServicesApple = () => {
           </p>
         </div>
 
-        {/* Main Content Area */}
-        <div className="relative">
-          
-          {/* Service Cards Container */}
-          <div className="overflow-hidden">
-            <div 
-              className="flex transition-transform duration-700 ease-out"
-              style={{ transform: `translateX(-${activeService * 100}%)` }}
-            >
-              {services.map((service, index) => (
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          /* Main Content Area */
+          <div className="relative">
+            
+            {/* Service Cards Container */}
+            <div className="overflow-hidden">
+              <div 
+                className="flex transition-transform duration-700 ease-out"
+                style={{ transform: `translateX(-${activeService * 100}%)` }}
+              >
+                {displayServices.map((service, index) => (
                 <div key={service.id} className="w-full flex-shrink-0 px-6">
                   <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center max-w-6xl mx-auto">
                     
@@ -132,7 +176,7 @@ const ServicesApple = () => {
 
             {/* Dots Indicator */}
             <div className="flex space-x-2">
-              {services.map((_, index) => (
+              {displayServices.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setActiveService(index)}
@@ -149,7 +193,7 @@ const ServicesApple = () => {
             <button
               onClick={nextService}
               className="w-12 h-12 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors duration-200 disabled:opacity-30"
-              disabled={activeService === services.length - 1}
+              disabled={activeService === displayServices.length - 1}
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
@@ -158,7 +202,7 @@ const ServicesApple = () => {
           {/* Service Labels */}
           <div className="flex justify-center mt-8 overflow-hidden">
             <div className="flex space-x-6 text-sm">
-              {services.map((service, index) => (
+              {displayServices.map((service, index) => (
                 <button
                   key={service.id}
                   onClick={() => setActiveService(index)}
@@ -174,6 +218,7 @@ const ServicesApple = () => {
             </div>
           </div>
         </div>
+        )}
 
         {/* Bottom CTA */}
         <div className="text-center mt-16 lg:mt-20">
