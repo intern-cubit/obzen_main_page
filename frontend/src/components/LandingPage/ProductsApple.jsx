@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { productService } from '../../services/contentService';
 
 const ProductsApple = () => {
+    const navigate = useNavigate();
     const [products, setProducts] = useState([
         {
             id: 1,
@@ -134,6 +136,19 @@ const ProductsApple = () => {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* View All Products Section */}
+            <div className="text-center mt-12 lg:mt-16">
+                <button
+                    onClick={() => navigate('/products')}
+                    className="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                >
+                    View All Products
+                </button>
+                <p className="text-gray-600 mt-4 text-sm">
+                    Explore our complete product catalog with detailed specifications
+                </p>
             </div>
         </div>
     );

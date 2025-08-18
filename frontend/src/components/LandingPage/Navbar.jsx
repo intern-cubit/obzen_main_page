@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,18 +18,36 @@ const Navbar = () => {
   }, [])
 
   const navItems = [
-    { name: 'Home', href: '#home' },
-    { name: 'About Us', href: '#about' },
-    { name: 'Products', href: '#products' },
-    { name: 'Our Services', href: '#services' },
-    { name: 'Contact Us', href: '#contact' }
+    { name: 'Home', href: '#home', isRoute: false },
+    { name: 'About Us', href: '#about', isRoute: false },
+    { name: 'Products', href: '#products', isRoute: false },
+    { name: 'All Products', href: '/products', isRoute: true },
+    { name: 'Our Services', href: '#services', isRoute: false },
+    { name: 'Contact Us', href: '#contact', isRoute: false }
   ]
 
-  const handleNavClick = (href) => {
+  const handleNavClick = (href, isRoute = false) => {
     setIsMobileMenuOpen(false)
-    const element = document.querySelector(href)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
+    
+    if (isRoute) {
+      navigate(href)
+    } else {
+      // If we're not on the home page, navigate to home first
+      if (location.pathname !== '/') {
+        navigate('/')
+        // Wait for navigation to complete, then scroll
+        setTimeout(() => {
+          const element = document.querySelector(href)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' })
+          }
+        }, 100)
+      } else {
+        const element = document.querySelector(href)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
+      }
     }
   }
 
@@ -47,7 +68,7 @@ const Navbar = () => {
               {navItems.map((item) => (
                 <button
                   key={item.name}
-                  onClick={() => handleNavClick(item.href)}
+                  onClick={() => handleNavClick(item.href, item.isRoute)}
                   className={`font-medium transition-colors duration-300 ${
                     isScrolled 
                       ? 'text-white hover:text-blue-600' 
@@ -101,7 +122,7 @@ const Navbar = () => {
             {navItems.map((item) => (
               <button
                 key={item.name}
-                onClick={() => handleNavClick(item.href)}
+                onClick={() => handleNavClick(item.href, item.isRoute)}
                 className="block w-full text-left text-gray-700 hover:text-blue-600 font-medium py-2 transition-colors duration-200"
               >
                 {item.name}

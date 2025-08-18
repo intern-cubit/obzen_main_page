@@ -4,6 +4,10 @@ import { Toaster } from 'react-hot-toast';
 
 // Public pages
 import LandingPage from './pages/LandingPage';
+import ProductsPage from './pages/ProductsPage';
+import WaBombProductPage from './pages/WaBombProductPage';
+import MailStormProductPage from './pages/MailStormProductPage';
+import CubiViewProductPage from './pages/CubiViewProductPage';
 
 // Admin pages
 import AdminLogin from './pages/admin/AdminLogin';
@@ -41,6 +45,10 @@ const App = () => {
                 <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={<LandingPage />} />
+                    <Route path="/products" element={<ProductsPage />} />
+                    <Route path="/products/wa-bomb" element={<WaBombProductPage />} />
+                    <Route path="/products/mail-storm" element={<MailStormProductPage />} />
+                    <Route path="/products/cubi-view" element={<CubiViewProductPage />} />
 
                     {/* Admin Routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />
