@@ -36,4 +36,61 @@ api.interceptors.response.use(
   }
 );
 
+// Create user API instance
+const userAPI = axios.create({
+  baseURL: BACKEND_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to include user token
+userAPI.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for user API
+userAPI.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+    
+    if (error.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (refreshToken) {
+          const response = await axios.post(`${BACKEND_URL}/users/refresh-token`, {
+            refreshToken
+          });
+          
+          const { token, refreshToken: newRefreshToken } = response.data.data;
+          localStorage.setItem('token', token);
+          localStorage.setItem('refreshToken', newRefreshToken);
+          
+          return userAPI(original);
+        }
+      } catch (refreshError) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 export default api;
+export { userAPI };

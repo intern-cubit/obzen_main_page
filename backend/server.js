@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 
 import connectDB from './config/database.js';
 import Admin from './models/Admin.js';
@@ -12,11 +13,15 @@ import Admin from './models/Admin.js';
 import authRoutes from './routes/auth.js';
 import heroRoutes from './routes/hero.js';
 import aboutRoutes from './routes/about.js';
-import productRoutes from './routes/products.js';
 import serviceRoutes from './routes/services.js';
 import reviewRoutes from './routes/reviews.js';
 import contactRoutes from './routes/contact.js';
 import uploadRoutes from './routes/upload.js';
+
+// Import e-commerce routes
+import userRoutes from './routes/users.js';
+import productsRoutes from './routes/products.js';
+import orderRoutes from './routes/orders.js';
 
 dotenv.config();
 
@@ -36,7 +41,7 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000 // More lenient in development
 });
 app.use(limiter);
 
@@ -48,11 +53,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/hero', heroRoutes);
 app.use('/api/about', aboutRoutes);
-app.use('/api/products', productRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/upload', uploadRoutes);
+
+// E-commerce routes
+app.use('/api/users', userRoutes);
+app.use('/api/ecommerce/products', productsRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
