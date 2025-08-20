@@ -12,8 +12,8 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCartWishlist } from '../contexts/CartWishlistContext';
 import { cartAPI, productAPI } from '../services/ecommerceAPI';
-import { useLocalCart } from '../hooks/useLocalStorage';
 import Navbar from '../components/LandingPage/Navbar';
 import FooterApple from '../components/LandingPage/FooterApple';
 import LoginModal from '../components/auth/LoginModal';
@@ -21,196 +21,112 @@ import RegisterModal from '../components/auth/RegisterModal';
 
 const CartPage = () => {
   const { user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  
-  // Local storage hook for non-authenticated users
   const {
-    localCart,
-    updateLocalCartQuantity,
-    removeFromLocalCart,
-    clearLocalCart,
-    getLocalCartTotal,
-    getLocalCartCount
-  } = useLocalCart();
+    cart: contextCart,
+    updateCartQuantity,
+    removeFromCart: removeFromContextCart,
+    clearCart: clearContextCart,
+    getCartTotal,
+    getCartCount
+  } = useCartWishlist();
+  const navigate = useNavigate();
 
-  const [cart, setCart] = useState([]);
-  const [totals, setTotals] = useState({ subtotal: 0, items: 0, total: 0 });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState({});
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [enrichedCart, setEnrichedCart] = useState([]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchCart();
-    } else {
-      // Use local storage cart and enrich with product details
-      enrichLocalCart();
-    }
-  }, [isAuthenticated, localCart]);
+  // Calculate totals from context cart
+  const totals = {
+    subtotal: getCartTotal(),
+    items: getCartCount(),
+    total: getCartTotal()
+  };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchCart();
-    } else {
-      // Use local storage cart and enrich with product details
-      setLoading(true);
-      enrichLocalCart();
-    }
-  }, [isAuthenticated, localCart]);
-
-  const enrichLocalCart = async () => {
-    try {
-      if (localCart.length === 0) {
-        setCart([]);
+    // Enrich cart items with product details if needed
+    const enrichCart = async () => {
+      if (contextCart.length === 0) {
         setEnrichedCart([]);
-        setTotals({ subtotal: 0, items: 0, total: 0 });
         setLoading(false);
         return;
       }
 
-      const enrichedItems = await Promise.all(
-        localCart.map(async (item) => {
-          // If item already has all required fields, use it as is
-          if (item.title && item.price && (item.backgroundImage || item.image)) {
-            return {
-              ...item,
-              backgroundImage: item.backgroundImage || item.image,
-              subtitle: item.subtitle || 'Product Description'
-            };
-          }
-          
-          // Otherwise, fetch product details
-          try {
-            const response = await productAPI.getProduct(item.productId);
-            const product = response.data.data.product;
-            return {
-              ...item,
-              title: product.title,
-              subtitle: product.subtitle,
-              price: product.price,
-              backgroundImage: product.backgroundImage,
-              originalPrice: product.originalPrice
-            };
-          } catch (error) {
-            console.error(`Failed to fetch product ${item.productId}:`, error);
-            // Return with default values if fetch fails
-            return {
-              ...item,
-              title: item.title || 'Product Name',
-              subtitle: item.subtitle || 'Product Description',
-              price: item.price || 0,
-              backgroundImage: item.backgroundImage || item.image || '',
-              originalPrice: item.originalPrice
-            };
-          }
-        })
-      );
-      
-      setEnrichedCart(enrichedItems);
-      
-      const subtotal = enrichedItems.reduce((total, item) => total + ((item.price || 0) * item.quantity), 0);
-      const itemCount = enrichedItems.reduce((total, item) => total + item.quantity, 0);
-      
-      setTotals({
-        subtotal: subtotal,
-        items: itemCount,
-        total: subtotal
-      });
-    } catch (error) {
-      console.error('Failed to enrich cart:', error);
-      // Fallback to original cart with default values
-      const fallbackCart = localCart.map(item => ({
-        ...item,
-        title: item.title || 'Product Name',
-        subtitle: item.subtitle || 'Product Description', 
-        price: item.price || 0,
-        backgroundImage: item.backgroundImage || item.image || ''
-      }));
-      setEnrichedCart(fallbackCart);
-      
-      const subtotal = fallbackCart.reduce((total, item) => total + ((item.price || 0) * item.quantity), 0);
-      const itemCount = fallbackCart.reduce((total, item) => total + item.quantity, 0);
-      
-      setTotals({
-        subtotal: subtotal,
-        items: itemCount,
-        total: subtotal
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCart = async () => {
-    try {
       setLoading(true);
-      const response = await cartAPI.getCart();
-      if (response.data.success) {
-        setCart(response.data.data.cart || []);
-        setTotals(response.data.data.totals || { subtotal: 0, items: 0, total: 0 });
+      try {
+        const enrichedItems = await Promise.all(
+          contextCart.map(async (item) => {
+            // If item already has all required fields, use it as is
+            if (item.title && item.price && (item.backgroundImage || item.image)) {
+              return {
+                ...item,
+                backgroundImage: item.backgroundImage || item.image,
+                subtitle: item.subtitle || 'Product Description'
+              };
+            }
+            // Otherwise, fetch product details if needed
+            try {
+              const response = await productAPI.getProduct(item.productId);
+              const product = response.data.data.product;
+              return {
+                ...item,
+                title: product.title,
+                subtitle: product.subtitle,
+                price: product.price,
+                backgroundImage: product.backgroundImage,
+                originalPrice: product.originalPrice
+              };
+            } catch (error) {
+              console.error(`Failed to fetch product ${item.productId}:`, error);
+              // Return with default values if fetch fails
+              return {
+                ...item,
+                title: item.title || 'Product Name',
+                subtitle: item.subtitle || 'Product Description',
+                price: item.price || 0,
+                backgroundImage: item.backgroundImage || item.image || '',
+                originalPrice: item.originalPrice
+              };
+            }
+          })
+        );
+        
+        setEnrichedCart(enrichedItems);
+      } catch (error) {
+        console.error('Failed to enrich cart:', error);
+        setEnrichedCart(contextCart);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch cart:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    enrichCart();
+  }, [contextCart]);
 
   const updateQuantity = async (itemId, newQuantity) => {
     if (newQuantity <= 0) {
-      removeItem(itemId);
+      removeFromContextCart(itemId);
       return;
     }
 
-    if (!isAuthenticated) {
-      // Update local storage
-      updateLocalCartQuantity(itemId, newQuantity);
-      return;
-    }
-
-    try {
-      setUpdating(prev => ({ ...prev, [itemId]: true }));
-      await cartAPI.updateCartItem(itemId, { quantity: newQuantity });
-      fetchCart();
-    } catch (error) {
-      console.error('Failed to update quantity:', error);
-    } finally {
-      setUpdating(prev => ({ ...prev, [itemId]: false }));
-    }
+    updateCartQuantity(itemId, newQuantity);
   };
 
   const removeItem = async (itemId) => {
-    if (!isAuthenticated) {
-      // Remove from local storage
-      removeFromLocalCart(itemId);
-      return;
-    }
-
-    try {
-      setUpdating(prev => ({ ...prev, [itemId]: true }));
-      await cartAPI.updateCartItem(itemId, { quantity: 0 });
-      fetchCart();
-    } catch (error) {
-      console.error('Failed to remove item:', error);
-    } finally {
-      setUpdating(prev => ({ ...prev, [itemId]: false }));
-    }
+    removeFromContextCart(itemId);
   };
 
-  const clearCart = async () => {
+  const clearCartHandler = async () => {
+    clearContextCart();
+  };
+
+  const handleCheckout = () => {
     if (!isAuthenticated) {
-      clearLocalCart();
+      setShowLoginModal(true);
       return;
     }
-
-    try {
-      await cartAPI.clearCart();
-      fetchCart();
-    } catch (error) {
-      console.error('Failed to clear cart:', error);
-    }
+    navigate('/checkout');
   };
 
   const proceedToCheckout = () => {
@@ -257,7 +173,7 @@ const CartPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {cart.length === 0 && enrichedCart.length === 0 ? (
+        {enrichedCart.length === 0 ? (
           <div className="text-center py-16">
             <ShoppingCart size={64} className="mx-auto text-gray-400 mb-4" />
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
@@ -279,7 +195,7 @@ const CartPage = () => {
                   <div className="flex justify-between items-center">
                     <h2 className="text-lg font-semibold">Cart Items</h2>
                     <button
-                      onClick={clearCart}
+                      onClick={clearCartHandler}
                       className="text-red-600 hover:text-red-700 text-sm font-medium"
                     >
                       Clear Cart
@@ -289,7 +205,7 @@ const CartPage = () => {
                 
                 <div className="divide-y">
                   <AnimatePresence>
-                    {(isAuthenticated ? cart : enrichedCart).map((item) => (
+                    {(isAuthenticated ? contextCart : enrichedCart).map((item) => (
                       <motion.div
                         key={item._id || item.productId}
                         initial={{ opacity: 1 }}

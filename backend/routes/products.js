@@ -9,6 +9,8 @@ import {
   getWishlist,
   addToCart,
   updateCartItem,
+  removeFromCartByProduct,
+  updateCartQuantityByProduct,
   getCart,
   clearCart,
   addReview,
@@ -36,6 +38,8 @@ router.get('/user/wishlist', getWishlist);
 router.post('/:productId/cart', addToCart);
 router.post('/:productId/buy-now', buyNow);
 router.put('/cart/:itemId', updateCartItem);
+router.delete('/cart/product/:productId', removeFromCartByProduct);
+router.put('/cart/product/:productId', updateCartQuantityByProduct);
 router.get('/user/cart', getCart);
 router.delete('/user/cart', clearCart);
 

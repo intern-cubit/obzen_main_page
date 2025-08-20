@@ -225,7 +225,7 @@ export const searchProducts = async (req, res) => {
 export const addToWishlist = async (req, res) => {
   try {
     const { productId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const user = await User.findById(userId);
     const product = await Product.findById(productId);
@@ -282,7 +282,7 @@ export const addToWishlist = async (req, res) => {
 
 export const getWishlist = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const user = await User.findById(userId).populate({
       path: 'wishlist',
@@ -314,7 +314,7 @@ export const addToCart = async (req, res) => {
   try {
     const { productId } = req.params;
     const { quantity = 1, variant } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const user = await User.findById(userId);
     const product = await Product.findById(productId);
@@ -391,7 +391,7 @@ export const updateCartItem = async (req, res) => {
   try {
     const { itemId } = req.params;
     const { quantity } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const user = await User.findById(userId);
 
@@ -447,9 +447,121 @@ export const updateCartItem = async (req, res) => {
   }
 };
 
+export const removeFromCartByProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Initialize cart if it doesn't exist
+    if (!user.cart) {
+      user.cart = [];
+    }
+
+    // Find and remove items with this product ID
+    const initialLength = user.cart.length;
+    user.cart = user.cart.filter(item => item.product.toString() !== productId);
+    
+    const removedItems = initialLength - user.cart.length;
+
+    await user.save();
+
+    // Populate cart for response
+    await user.populate({
+      path: 'cart.product',
+      select: 'title price backgroundImage stock inStock'
+    });
+
+    res.json({
+      success: true,
+      message: removedItems > 0 ? `${removedItems} item(s) removed from cart` : 'No items found to remove',
+      data: { cart: user.cart }
+    });
+
+  } catch (error) {
+    console.error('Remove from cart by product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+export const updateCartQuantityByProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { quantity, variant } = req.body;
+    const userId = req.user.id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Initialize cart if it doesn't exist
+    if (!user.cart) {
+      user.cart = [];
+    }
+
+    // Find cart item by product ID and variant
+    const cartItemIndex = user.cart.findIndex(item => 
+      item.product.toString() === productId &&
+      JSON.stringify(item.variant) === JSON.stringify(variant || {})
+    );
+
+    if (cartItemIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cart item not found'
+      });
+    }
+
+    if (quantity <= 0) {
+      // Remove item
+      user.cart.splice(cartItemIndex, 1);
+    } else {
+      // Update quantity
+      user.cart[cartItemIndex].quantity = quantity;
+    }
+
+    await user.save();
+
+    // Populate cart for response
+    await user.populate({
+      path: 'cart.product',
+      select: 'title price backgroundImage stock inStock'
+    });
+
+    res.json({
+      success: true,
+      message: quantity <= 0 ? 'Item removed from cart' : 'Cart quantity updated',
+      data: { cart: user.cart }
+    });
+
+  } catch (error) {
+    console.error('Update cart quantity by product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 export const getCart = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const user = await User.findById(userId).populate({
       path: 'cart.product',
@@ -492,7 +604,7 @@ export const getCart = async (req, res) => {
 
 export const clearCart = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const user = await User.findById(userId);
 
@@ -524,7 +636,7 @@ export const addReview = async (req, res) => {
   try {
     const { productId } = req.params;
     const { rating, comment } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const product = await Product.findById(productId);
     if (!product) {
@@ -585,7 +697,7 @@ export const buyNow = async (req, res) => {
   try {
     const { productId } = req.params;
     const { quantity = 1, variant } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const user = await User.findById(userId);
     const product = await Product.findById(productId);

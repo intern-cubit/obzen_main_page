@@ -22,29 +22,31 @@ export const addressAPI = {
 
 // Product APIs
 export const productAPI = {
-  getProducts: (params = {}) => userAPI.get('/ecommerce/products', { params }),
-  getProduct: (id) => userAPI.get(`/ecommerce/products/${id}`),
-  getProductById: (id) => userAPI.get(`/ecommerce/products/${id}`),
-  getCategories: () => userAPI.get('/ecommerce/products/categories'),
-  getFeaturedProducts: (limit = 8) => userAPI.get('/ecommerce/products/featured', { params: { limit } }),
-  searchProducts: (query, limit = 10) => userAPI.get('/ecommerce/products/search', { params: { q: query, limit } })
+  getProducts: (params = {}) => userAPI.get('/products', { params }),
+  getProduct: (id) => userAPI.get(`/products/${id}`),
+  getProductById: (id) => userAPI.get(`/products/${id}`),
+  getCategories: () => userAPI.get('/products/categories'),
+  getFeaturedProducts: (limit = 8) => userAPI.get('/products/featured', { params: { limit } }),
+  searchProducts: (query, limit = 10) => userAPI.get('/products/search', { params: { q: query, limit } })
 };
 
 // Wishlist APIs
 export const wishlistAPI = {
-  addToWishlist: (productId) => userAPI.post(`/ecommerce/products/${productId}/wishlist`),
-  removeFromWishlist: (productId) => userAPI.post(`/ecommerce/products/${productId}/wishlist`),
-  getWishlist: () => userAPI.get('/ecommerce/products/user/wishlist')
+  addToWishlist: (productId) => userAPI.post(`/products/${productId}/wishlist`),
+  removeFromWishlist: (productId) => userAPI.post(`/products/${productId}/wishlist`),
+  getWishlist: () => userAPI.get('/products/user/wishlist')
 };
 
 // Cart APIs
 export const cartAPI = {
-  addToCart: (productId, data) => userAPI.post(`/ecommerce/products/${productId}/cart`, data),
-  buyNow: (productId, data) => userAPI.post(`/ecommerce/products/${productId}/buy-now`, data),
-  updateCartItem: (itemId, data) => userAPI.put(`/ecommerce/products/cart/${itemId}`, data),
-  removeFromCart: (itemId) => userAPI.delete(`/ecommerce/products/cart/${itemId}`),
-  getCart: () => userAPI.get('/ecommerce/products/user/cart'),
-  clearCart: () => userAPI.delete('/ecommerce/products/user/cart')
+  addToCart: (productId, data) => userAPI.post(`/products/${productId}/cart`, data),
+  buyNow: (productId, data) => userAPI.post(`/products/${productId}/buy-now`, data),
+  updateCartItem: (itemId, data) => userAPI.put(`/products/cart/${itemId}`, data),
+  removeFromCart: (itemId) => userAPI.delete(`/products/cart/${itemId}`),
+  removeFromCartByProduct: (productId) => userAPI.delete(`/products/cart/product/${productId}`),
+  updateCartQuantityByProduct: (productId, data) => userAPI.put(`/products/cart/product/${productId}`, data),
+  getCart: () => userAPI.get('/products/user/cart'),
+  clearCart: () => userAPI.delete('/products/user/cart')
 };
 
 // Order APIs
@@ -61,5 +63,5 @@ export const orderAPI = {
 
 // Review APIs
 export const reviewAPI = {
-  addReview: (productId, reviewData) => userAPI.post(`/ecommerce/products/${productId}/reviews`, reviewData)
+  addReview: (productId, reviewData) => userAPI.post(`/products/${productId}/reviews`, reviewData)
 };

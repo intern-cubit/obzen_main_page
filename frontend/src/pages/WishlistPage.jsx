@@ -10,8 +10,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCartWishlist } from '../contexts/CartWishlistContext';
 import { wishlistAPI, cartAPI, productAPI } from '../services/ecommerceAPI';
-import { useLocalWishlist, useLocalCart } from '../hooks/useLocalStorage';
 import Navbar from '../components/LandingPage/Navbar';
 import FooterApple from '../components/LandingPage/FooterApple';
 import LoginModal from '../components/auth/LoginModal';
@@ -19,120 +19,70 @@ import RegisterModal from '../components/auth/RegisterModal';
 
 const WishlistPage = () => {
   const { user, isAuthenticated } = useAuth();
+  const {
+    wishlist: contextWishlist,
+    addToCart: contextAddToCart,
+    removeFromWishlist: contextRemoveFromWishlist,
+    clearWishlist: contextClearWishlist,
+    isInCart: contextIsInCart,
+    cartLoading,
+    wishlistLoading
+  } = useCartWishlist();
   const navigate = useNavigate();
   
-  // Local storage hooks for non-authenticated users
-  const {
-    localWishlist,
-    removeFromLocalWishlist,
-    clearLocalWishlist,
-    isInLocalWishlist
-  } = useLocalWishlist();
-  
-  const {
-    addToLocalCart,
-    isInLocalCart
-  } = useLocalCart();
-
-  const [wishlist, setWishlist] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [enrichedWishlist, setEnrichedWishlist] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState({});
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchWishlist();
-    } else {
-      // Use local storage wishlist - need to fetch product details
-      fetchLocalWishlistProducts();
-    }
-  }, [isAuthenticated, localWishlist]);
-
-  const fetchLocalWishlistProducts = async () => {
-    if (localWishlist.length === 0) {
-      setWishlist([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      // Fetch product details for each product ID in local wishlist
-      const productPromises = localWishlist.map(async (productId) => {
-        try {
-          const response = await productAPI.getProduct(productId);
-          return response.data.data?.product || response.data;
-        } catch (error) {
-          console.error(`Failed to fetch product ${productId}:`, error);
-          return null;
-        }
-      });
-
-      const products = await Promise.all(productPromises);
-      const validProducts = products.filter(p => p !== null);
-      setWishlist(validProducts);
-    } catch (error) {
-      console.error('Failed to fetch local wishlist products:', error);
-      setWishlist([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchWishlist = async () => {
-    try {
-      setLoading(true);
-      const response = await wishlistAPI.getWishlist();
-      if (response.data.success) {
-        setWishlist(response.data.data.wishlist || []);
+    // Fetch product details for wishlist items
+    const fetchWishlistProducts = async () => {
+      if (contextWishlist.length === 0) {
+        setEnrichedWishlist([]);
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Failed to fetch wishlist:', error);
-    } finally {
-      setLoading(false);
-    }
+
+      try {
+        setLoading(true);
+        const productPromises = contextWishlist.map(async (productId) => {
+          try {
+            const response = await productAPI.getProduct(productId);
+            return response.data.data?.product || response.data;
+          } catch (error) {
+            console.error(`Failed to fetch product ${productId}:`, error);
+            return null;
+          }
+        });
+
+        const products = await Promise.all(productPromises);
+        const validProducts = products.filter(p => p !== null);
+        setEnrichedWishlist(validProducts);
+      } catch (error) {
+        console.error('Failed to fetch wishlist products:', error);
+        setEnrichedWishlist([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWishlistProducts();
+  }, [contextWishlist]);
+
+  const removeFromWishlistHandler = async (productId) => {
+    contextRemoveFromWishlist(productId);
   };
 
-  const removeFromWishlist = async (productId) => {
-    if (!isAuthenticated) {
-      removeFromLocalWishlist(productId);
-      return;
-    }
-
-    try {
-      setProcessing(prev => ({ ...prev, [productId]: true }));
-      await wishlistAPI.removeFromWishlist(productId);
-      fetchWishlist();
-    } catch (error) {
-      console.error('Failed to remove from wishlist:', error);
-    } finally {
-      setProcessing(prev => ({ ...prev, [productId]: false }));
-    }
-  };
-
-  const addToCart = async (product) => {
-    if (!isAuthenticated) {
-      const productInfo = {
-        title: product.title,
-        subtitle: product.subtitle,
-        price: product.price,
-        image: product.backgroundImage
-      };
-      addToLocalCart(product._id || product.productId, 1, productInfo);
-      return;
-    }
-
-    try {
-      setProcessing(prev => ({ ...prev, [product._id]: 'cart' }));
-      await cartAPI.addToCart(product._id, { quantity: 1 });
-      // Optionally remove from wishlist after adding to cart
-      // await removeFromWishlist(product._id);
-    } catch (error) {
-      console.error('Failed to add to cart:', error);
-    } finally {
-      setProcessing(prev => ({ ...prev, [product._id]: false }));
-    }
+  const addToCartHandler = async (product) => {
+    const productInfo = {
+      title: product.title,
+      subtitle: product.subtitle,
+      price: product.price,
+      image: product.backgroundImage
+    };
+    contextAddToCart(product._id || product.productId, 1, productInfo);
   };
 
   const buyNow = async (product) => {
@@ -159,21 +109,8 @@ const WishlistPage = () => {
     }
   };
 
-  const clearWishlist = async () => {
-    if (!isAuthenticated) {
-      clearLocalWishlist();
-      return;
-    }
-
-    try {
-      // Clear all items one by one since there's no bulk clear endpoint
-      await Promise.all(wishlist.map(item => 
-        wishlistAPI.removeFromWishlist(item._id || item.productId)
-      ));
-      fetchWishlist();
-    } catch (error) {
-      console.error('Failed to clear wishlist:', error);
-    }
+  const clearWishlistHandler = async () => {
+    contextClearWishlist();
   };
 
   if (loading) {
@@ -205,14 +142,14 @@ const WishlistPage = () => {
             <div className="h-6 w-px bg-gray-300"></div>
             <h1 className="text-2xl font-bold text-gray-900">My Wishlist</h1>
             <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
-              {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'}
+              {enrichedWishlist.length} {enrichedWishlist.length === 1 ? 'item' : 'items'}
             </span>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {wishlist.length === 0 ? (
+        {enrichedWishlist.length === 0 ? (
           <div className="text-center py-16">
             <Heart size={64} className="mx-auto text-gray-400 mb-4" />
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h2>
@@ -231,7 +168,7 @@ const WishlistPage = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">Saved Items</h2>
               <button
-                onClick={clearWishlist}
+                onClick={clearWishlistHandler}
                 className="text-red-600 hover:text-red-700 text-sm font-medium"
               >
                 Clear All
@@ -241,7 +178,7 @@ const WishlistPage = () => {
             {/* Wishlist Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               <AnimatePresence>
-                {wishlist.map((item) => {
+                {enrichedWishlist.map((item) => {
                   const product = item.product || item;
                   const productId = product._id || item.productId;
                   
@@ -265,7 +202,7 @@ const WishlistPage = () => {
                         
                         {/* Remove from Wishlist */}
                         <button
-                          onClick={() => removeFromWishlist(productId)}
+                          onClick={() => removeFromWishlistHandler(productId)}
                           disabled={processing[productId]}
                           className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-sm hover:bg-red-50 transition-colors"
                         >
@@ -334,20 +271,27 @@ const WishlistPage = () => {
                         {/* Action Buttons */}
                         <div className="space-y-2">
                           <button
-                            onClick={() => addToCart(product)}
-                            disabled={processing[productId] || !product.inStock}
-                            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+                            onClick={() => addToCartHandler(product)}
+                            disabled={cartLoading || !product.inStock}
+                            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                               !product.inStock
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : processing[productId] === 'cart'
+                                : cartLoading
                                 ? 'bg-blue-400 text-white'
+                                : contextIsInCart(productId)
+                                ? 'bg-green-600 text-white hover:bg-green-700'
                                 : 'bg-blue-600 text-white hover:bg-blue-700'
                             }`}
                           >
+                            {cartLoading && (
+                              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            )}
                             {!product.inStock 
                               ? 'Out of Stock'
-                              : processing[productId] === 'cart'
+                              : cartLoading
                               ? 'Adding...'
+                              : contextIsInCart(productId)
+                              ? 'In Cart'
                               : 'Add to Cart'
                             }
                           </button>

@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ShoppingCart, Heart } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-const GlobalNavbar = ({ cartCount = 0, wishlistCount = 0 }) => {
+const GlobalNavbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { cart = [], wishlist = [] } = useAuth();
+  const cartCount = cart.length;
+  const wishlistCount = wishlist.length;
 
   useEffect(() => {
     const handleScroll = () => {

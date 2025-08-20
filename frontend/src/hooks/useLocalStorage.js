@@ -16,33 +16,26 @@ export const useLocalCart = () => {
     }
   }, []);
 
-  const addToLocalCart = (productId, quantity = 1, productInfo = {}) => {
-    const existingItem = localCart.find(item => item.productId === productId);
-    let newCart;
-    
-    if (existingItem) {
-      newCart = localCart.map(item =>
-        item.productId === productId
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      );
-    } else {
-      newCart = [...localCart, { 
-        productId, 
-        quantity, 
-        addedAt: Date.now(),
-        price: productInfo.price || 0,
-        title: productInfo.title || '',
-        subtitle: productInfo.subtitle || '',
-        backgroundImage: productInfo.image || '',
-        image: productInfo.image || '' // Keep both for compatibility
-      }];
-    }
-    
-    setLocalCart(newCart);
-    localStorage.setItem('localCart', JSON.stringify(newCart));
-    return newCart;
-  };
+    const addToLocalCart = (productId, quantity = 1) => {
+      const existingItem = localCart.find(item => item.productId === productId);
+      let newCart;
+      if (existingItem) {
+        newCart = localCart.map(item =>
+          item.productId === productId
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      } else {
+        newCart = [...localCart, { 
+          productId, 
+          quantity, 
+          addedAt: Date.now()
+        }];
+      }
+      setLocalCart(newCart);
+      localStorage.setItem('localCart', JSON.stringify(newCart));
+      return newCart;
+    };
 
   const removeFromLocalCart = (productId) => {
     const newCart = localCart.filter(item => item.productId !== productId);

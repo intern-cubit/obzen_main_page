@@ -60,7 +60,7 @@ app.use('/api/upload', uploadRoutes);
 
 // E-commerce routes
 app.use('/api/users', userRoutes);
-app.use('/api/ecommerce/products', productsRoutes);
+app.use('/api/products', productsRoutes);
 app.use('/api/orders', orderRoutes);
 
 // Health check route

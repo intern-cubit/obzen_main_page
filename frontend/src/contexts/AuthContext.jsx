@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -6,7 +6,9 @@ const initialState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  loading: true
+  loading: true,
+  cart: [], // array of product ids for guest cart
+  wishlist: [] // array of product ids for guest wishlist
 };
 
 const authReducer = (state, action) => {
@@ -38,18 +40,36 @@ const authReducer = (state, action) => {
         ...state,
         loading: false
       };
+
+    case 'SET_CART':
+      return {
+        ...state,
+        cart: action.payload
+      };
+    case 'SET_WISHLIST':
+      return {
+        ...state,
+        wishlist: action.payload
+      };
     default:
       return state;
   }
 };
 
+
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  // Initialize auth, cart, and wishlist from localStorage
   useEffect(() => {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
-    
+    const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
+    const localWishlist = JSON.parse(localStorage.getItem('localWishlist') || '[]');
+
+    dispatch({ type: 'SET_CART', payload: localCart.map(item => item.productId) });
+    dispatch({ type: 'SET_WISHLIST', payload: localWishlist });
+
     if (token && user) {
       try {
         const parsedUser = JSON.parse(user);
@@ -71,7 +91,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = (userData, token) => {
+  // Update cart in context and localStorage
+  const setCart = useCallback((cartIds) => {
+    dispatch({ type: 'SET_CART', payload: cartIds });
+    // Also update localStorage for guest
+    const localCart = JSON.parse(localStorage.getItem('localCart') || '[]');
+    const updatedCart = cartIds.map(id => {
+      const found = localCart.find(item => item.productId === id);
+      return found || { productId: id, quantity: 1 };
+    });
+    localStorage.setItem('localCart', JSON.stringify(updatedCart));
+  }, []);
+
+  // Update wishlist in context and localStorage
+  const setWishlist = useCallback((wishlistIds) => {
+    dispatch({ type: 'SET_WISHLIST', payload: wishlistIds });
+    localStorage.setItem('localWishlist', JSON.stringify(wishlistIds));
+  }, []);
+
+  const login = useCallback((userData, token) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     dispatch({
@@ -81,28 +119,30 @@ export const AuthProvider = ({ children }) => {
         token
       }
     });
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('refreshToken');
     dispatch({ type: 'LOGOUT' });
-  };
+  }, []);
 
-  const updateUser = (userData) => {
+  const updateUser = useCallback((userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
     dispatch({
       type: 'UPDATE_USER',
       payload: userData
     });
-  };
+  }, []);
 
   const value = {
     ...state,
     login,
     logout,
-    updateUser
+    updateUser,
+    setCart,
+    setWishlist
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

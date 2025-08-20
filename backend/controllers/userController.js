@@ -5,12 +5,12 @@ import { sendEmail } from '../utils/emailService.js';
 
 // Generate JWT Token
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
 // Generate refresh token
 const generateRefreshToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: '90d' });
+  return jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET, { expiresIn: '90d' });
 };
 
 export const register = async (req, res) => {
@@ -268,7 +268,7 @@ export const verifyEmail = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId)
+    const user = await User.findById(req.user.id)
       .populate('cart.product')
       .populate('wishlist');
 
@@ -300,7 +300,7 @@ export const updateProfile = async (req, res) => {
   try {
     const { firstName, lastName, mobile, dateOfBirth, gender } = req.body;
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -339,7 +339,7 @@ export const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user.userId).select('+password');
+    const user = await User.findById(req.user.id).select('+password');
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -377,7 +377,7 @@ export const addAddress = async (req, res) => {
   try {
     const { type, fullName, mobile, pincode, locality, address, city, state, landmark, isDefault } = req.body;
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -428,7 +428,7 @@ export const updateAddress = async (req, res) => {
     const { addressId } = req.params;
     const { type, fullName, mobile, pincode, locality, address, city, state, landmark, isDefault } = req.body;
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -490,7 +490,7 @@ export const deleteAddress = async (req, res) => {
   try {
     const { addressId } = req.params;
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         success: false,

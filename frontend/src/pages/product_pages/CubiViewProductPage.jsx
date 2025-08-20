@@ -49,8 +49,8 @@ import {
   CloudUpload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/LandingPage/Navbar';
-import FooterApple from '../components/LandingPage/FooterApple';
+import Navbar from '../../components/LandingPage/Navbar';
+import FooterApple from '../../components/LandingPage/FooterApple';
 
 const CubiViewProductPage = () => {
   const navigate = useNavigate();

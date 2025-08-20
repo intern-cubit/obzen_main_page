@@ -21,27 +21,9 @@ import {
   Zap
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCartWishlist } from '../contexts/CartWishlistContext';
 import { productAPI } from '../services/ecommerceAPI';
 import { formatPrice } from '../utils/priceUtils';
-import { useLocalCart, useLocalWishlist } from '../hooks/useLocalStorage';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { 
-  addToCart, 
-  selectIsInCart,
-  updateCartStatus
-} from '../store/slices/cartSlice';
-import { 
-  addToWishlist as addToWishlistAction, 
-  removeFromWishlist as removeFromWishlistAction,
-  selectIsInWishlist,
-  updateWishlistStatus
-} from '../store/slices/wishlistSlice';
-import { 
-  fetchProductById,
-  selectCurrentProduct,
-  selectProductsLoading,
-  clearCurrentProduct
-} from '../store/slices/productsSlice';
 import Navbar from '../components/LandingPage/Navbar';
 import FooterApple from '../components/LandingPage/FooterApple';
 import LoginModal from '../components/auth/LoginModal';
@@ -51,21 +33,35 @@ const ProductDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const dispatch = useAppDispatch();
-  
-  // Local storage hooks for non-authenticated users
-  const { addToLocalCart } = useLocalCart();
-  const { toggleLocalWishlist, isInLocalWishlist } = useLocalWishlist();
-  
-  // Redux selectors
-  const product = useAppSelector(selectCurrentProduct);
-  const loading = useAppSelector(selectProductsLoading);
-  const isInCart = isAuthenticated 
-    ? useAppSelector(selectIsInCart(id))
-    : false; // Local cart checking would need to be implemented
-  const isInWishlist = isAuthenticated 
-    ? useAppSelector(selectIsInWishlist(id))
-    : isInLocalWishlist(id);
+  const { 
+    addToCart, 
+    toggleWishlist, 
+    isInCart, 
+    isInWishlist,
+    cartLoading,
+    wishlistLoading
+  } = useCartWishlist();
+
+  // State for product details
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      setLoading(true);
+      try {
+        const response = await productAPI.getProduct(id);
+        setProduct(response.data.data.product || null);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch product details');
+        setProduct(null);
+      }
+      setLoading(false);
+    };
+    if (id) fetchProductDetails();
+  }, [id]);
   
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -75,20 +71,11 @@ const ProductDetailPage = () => {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [addingToCart, setAddingToCart] = useState(false);
   const [addingToWishlist, setAddingToWishlist] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      dispatch(fetchProductById(id));
-      fetchRelatedProducts();
-    }
-    
-    // Cleanup when component unmounts
-    return () => {
-      dispatch(clearCurrentProduct());
-    };
-  }, [id, dispatch]);
+  // Removed Redux product fetch and cleanup. Use API fetch logic if needed.
+  }, [id]);
 
   const fetchRelatedProducts = async () => {
     try {
@@ -106,52 +93,18 @@ const ProductDetailPage = () => {
   };
 
   const handleAddToCart = async () => {
-    if (!isAuthenticated) {
-      // For non-authenticated users, use local storage
-      const productInfo = product ? {
-        title: product.title,
-        subtitle: product.subtitle,
-        price: product.price,
-        image: product.backgroundImage
-      } : {};
-      
-      addToLocalCart(id, quantity, productInfo);
-      return;
-    }
-
-    try {
-      setAddingToCart(true);
-      await dispatch(addToCart({ 
-        productId: id, 
-        quantity, 
-        variant: selectedVariant?._id 
-      })).unwrap();
-      // Success notification can be added here
-    } catch (error) {
-      console.error('Failed to add to cart:', error);
-    } finally {
-      setAddingToCart(false);
-    }
+    const productInfo = {
+      title: product?.title,
+      subtitle: product?.subtitle,
+      price: getCurrentPrice(),
+      image: product?.backgroundImage || product?.images?.[0]
+    };
+    
+    addToCart(id, quantity, productInfo);
   };
 
   const handleAddToWishlist = async () => {
-    if (!isAuthenticated) {
-      toggleLocalWishlist(id);
-      return;
-    }
-
-    try {
-      setAddingToWishlist(true);
-      if (isInWishlist) {
-        await dispatch(removeFromWishlistAction(id)).unwrap();
-      } else {
-        await dispatch(addToWishlistAction(id)).unwrap();
-      }
-    } catch (error) {
-      console.error('Failed to update wishlist:', error);
-    } finally {
-      setAddingToWishlist(false);
-    }
+    toggleWishlist(id);
   };
 
   const handleBuyNow = async () => {
@@ -380,16 +333,20 @@ const ProductDetailPage = () => {
             {/* Action Buttons */}
             <div className="flex space-x-4 mb-8">
               <button
-                onClick={isInCart ? () => navigate('/cart') : handleAddToCart}
-                disabled={!product.inStock || addingToCart}
+                onClick={isInCart(id) ? () => navigate('/cart') : handleAddToCart}
+                disabled={!product.inStock || cartLoading}
                 className={`flex-1 py-3 px-6 rounded-lg flex items-center justify-center space-x-2 ${
-                  isInCart 
+                  isInCart(id) 
                     ? 'bg-green-600 text-white hover:bg-green-700' 
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 } disabled:bg-gray-400`}
               >
-                <ShoppingCart size={20} />
-                <span>{addingToCart ? 'Adding...' : isInCart ? 'Go to Cart' : 'Add to Cart'}</span>
+                {cartLoading ? (
+                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                ) : (
+                  <ShoppingCart size={20} />
+                )}
+                <span>{cartLoading ? 'Adding...' : isInCart(id) ? 'Go to Cart' : 'Add to Cart'}</span>
               </button>
               
               <button
@@ -404,10 +361,10 @@ const ProductDetailPage = () => {
                 onClick={handleAddToWishlist}
                 disabled={addingToWishlist}
                 className={`p-3 border rounded-lg ${
-                  isInWishlist ? 'bg-red-50 border-red-200 text-red-600' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                  isInWishlist(id) ? 'bg-red-50 border-red-200 text-red-600' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <Heart size={20} className={isInWishlist ? 'fill-current' : ''} />
+                <Heart size={20} className={isInWishlist(id) ? 'fill-current' : ''} />
               </button>
             </div>
 

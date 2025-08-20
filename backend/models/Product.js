@@ -205,4 +205,4 @@ productSchema.index({ createdAt: -1 });
 // Add pagination plugin
 productSchema.plugin(mongoosePaginate);
 
-export default mongoose.model('EcommerceProduct', productSchema);
+export default mongoose.model('Product', productSchema);

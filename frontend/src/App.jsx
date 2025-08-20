@@ -2,6 +2,15 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartWishlistProvider } from './contexts/CartWishlistContext';
+import AuthSyncHandler from './components/AuthSyncHandler';
+
+// Load development utilities in dev mode
+if (import.meta.env.DEV) {
+  import('./utils/clearStorageData.js').catch(() => {
+    console.log('Development utilities not loaded');
+  });
+}
 
 // Public pages
 import LandingPage from './pages/LandingPage';
@@ -10,31 +19,32 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
-import DebugLocalStorage from './pages/DebugLocalStorage';
-import WaBombProductPage from './pages/WaBombProductPage';
-import MailStormProductPage from './pages/MailStormProductPage';
-import CubiViewProductPage from './pages/CubiViewProductPage';
+import WaBombProductPage from './pages/product_pages/WaBombProductPage';
+import MailStormProductPage from './pages/product_pages/MailStormProductPage';
+import CubiViewProductPage from './pages/product_pages/CubiViewProductPage';
 
 // Admin pages
-import AdminLogin from './pages/admin/AdminLogin';
-import AdminLayout from './pages/admin/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import HeroAdmin from './pages/admin/HeroAdmin';
-import AboutAdmin from './pages/admin/AboutAdmin';
-import ProductsAdmin from './pages/admin/ProductsAdmin';
-import ReviewsAdmin from './pages/admin/ReviewsAdmin';
-import ServicesAdmin from './pages/admin/ServicesAdmin';
-import ContactAdmin from './pages/admin/ContactAdmin';
+import AdminLogin from './components/admin/AdminLogin';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminDashboard from './components/admin/AdminDashboard';
+import HeroAdmin from './components/admin/HeroAdmin';
+import AboutAdmin from './components/admin/AboutAdmin';
+import ProductsAdmin from './components/admin/ProductsAdmin';
+import ReviewsAdmin from './components/admin/ReviewsAdmin';
+import ServicesAdmin from './components/admin/ServicesAdmin';
+import ContactAdmin from './components/admin/ContactAdmin';
 
 const App = () => {
     return (
         <AuthProvider>
-            <Router
-                future={{
-                    v7_startTransition: true,
-                    v7_relativeSplatPath: true,
-                }}
-            >
+            <CartWishlistProvider>
+                <AuthSyncHandler>
+                    <Router
+                        future={{
+                            v7_startTransition: true,
+                            v7_relativeSplatPath: true,
+                        }}
+                    >
                 <div className="App">
                     <Toaster
                         position="top-right"
@@ -57,7 +67,6 @@ const App = () => {
                     <Routes>
                         {/* Public Routes */}
                         <Route path="/" element={<LandingPage />} />
-                        <Route path="/debug" element={<DebugLocalStorage />} />
                         <Route path="/shop" element={<ProductsPage />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/product/:id" element={<ProductDetailPage />} />
@@ -82,6 +91,8 @@ const App = () => {
                     </Routes>
                 </div>
             </Router>
+            </AuthSyncHandler>
+            </CartWishlistProvider>
         </AuthProvider>
     );
 };

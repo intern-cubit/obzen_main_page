@@ -12,7 +12,7 @@ export const createOrder = async (req, res) => {
       paymentMethod,
       couponCode
     } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Validate items and calculate totals
     let subtotal = 0;
@@ -215,7 +215,7 @@ export const getUserOrders = async (req, res) => {
       startDate,
       endDate
     } = req.query;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     // Build query
     const query = { user: userId };
@@ -268,7 +268,7 @@ export const getUserOrders = async (req, res) => {
 export const getOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const order = await Order.findOne({
       $or: [{ _id: orderId }, { orderNumber: orderId }],
@@ -303,7 +303,7 @@ export const cancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const order = await Order.findOne({
       $or: [{ _id: orderId }, { orderNumber: orderId }],
@@ -362,7 +362,7 @@ export const cancelOrder = async (req, res) => {
 export const trackOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const order = await Order.findOne({
       $or: [{ _id: orderId }, { orderNumber: orderId }],
@@ -421,7 +421,7 @@ export const requestReturn = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { reason, items } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const order = await Order.findOne({
       $or: [{ _id: orderId }, { orderNumber: orderId }],
@@ -465,7 +465,7 @@ export const requestReturn = async (req, res) => {
 
 export const getOrderSummary = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const summary = await Order.aggregate([
       { $match: { user: userId } },
