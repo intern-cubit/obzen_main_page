@@ -169,12 +169,17 @@ const ProductsPage = () => {
                     )}
                     <button
                         onClick={() => handleAddToWishlist(product._id)}
-                        className={`absolute bottom-4 right-4 p-2 rounded-full transition-colors ${isInWishlist(product._id)
+                        disabled={wishlistLoading}
+                        className={`absolute bottom-4 right-4 p-2 rounded-full transition-colors flex items-center justify-center ${isInWishlist(product._id)
                             ? 'bg-red-500 text-white'
                             : 'bg-white text-gray-600 hover:bg-red-500 hover:text-white'
                             }`}
                     >
-                        <Heart size={20} fill={isInWishlist(product._id) ? 'currentColor' : 'none'} />
+                        {wishlistLoading ? (
+                            <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full"></div>
+                        ) : (
+                            <Heart size={20} fill={isInWishlist(product._id) ? 'currentColor' : 'none'} />
+                        )}
                     </button>
                 </div>
 

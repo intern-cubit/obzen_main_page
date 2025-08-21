@@ -71,7 +71,6 @@ const ProductDetailPage = () => {
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [addingToWishlist, setAddingToWishlist] = useState(false);
 
   useEffect(() => {
   // Removed Redux product fetch and cleanup. Use API fetch logic if needed.
@@ -359,12 +358,16 @@ const ProductDetailPage = () => {
               
               <button
                 onClick={handleAddToWishlist}
-                disabled={addingToWishlist}
-                className={`p-3 border rounded-lg ${
+                disabled={wishlistLoading}
+                className={`p-3 border rounded-lg flex items-center justify-center ${
                   isInWishlist(id) ? 'bg-red-50 border-red-200 text-red-600' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <Heart size={20} className={isInWishlist(id) ? 'fill-current' : ''} />
+                {wishlistLoading ? (
+                  <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full"></div>
+                ) : (
+                  <Heart size={20} className={isInWishlist(id) ? 'fill-current' : ''} />
+                )}
               </button>
             </div>
 

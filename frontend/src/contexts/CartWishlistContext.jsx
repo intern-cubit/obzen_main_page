@@ -240,9 +240,25 @@ export const CartWishlistProvider = ({ children }) => {
 
         if (wishlistResponse.data && wishlistResponse.data.success) {
           const wishlistData = wishlistResponse.data.data.wishlist || [];
+          // Normalize wishlist data - extract product IDs if it's an array of objects
+          const normalizedWishlist = wishlistData.map(item => {
+            // If item is just a product ID string, return it
+            if (typeof item === 'string') {
+              return item;
+            }
+            // If item is an object with product info, extract the product ID
+            if (item.product && item.product._id) {
+              return item.product._id;
+            }
+            // If item has _id directly
+            if (item._id) {
+              return item._id;
+            }
+            return item;
+          });
           // Overwrite localStorage with database data  
-          localStorage.setItem('localWishlist', JSON.stringify(wishlistData));
-          dispatch({ type: 'SET_WISHLIST', payload: wishlistData });
+          localStorage.setItem('localWishlist', JSON.stringify(normalizedWishlist));
+          dispatch({ type: 'SET_WISHLIST', payload: normalizedWishlist });
         }
         
         console.log('Data fetched and local storage updated successfully');
@@ -410,14 +426,33 @@ export const CartWishlistProvider = ({ children }) => {
     if (state.isAuthenticated) {
       try {
         const response = await wishlistAPI.addToWishlist(productId);
+        console.log('addToWishlist response:', response);
         if (response.data && response.data.success) {
           // Fetch updated wishlist from database
           const wishlistResponse = await wishlistAPI.getWishlist();
+          console.log('getWishlist response:', wishlistResponse);
           if (wishlistResponse.data && wishlistResponse.data.success) {
             const wishlistData = wishlistResponse.data.data.wishlist || [];
+            // Normalize wishlist data - extract product IDs
+            const normalizedWishlist = wishlistData.map(item => {
+              // If item is just a product ID string, return it
+              if (typeof item === 'string') {
+                return item;
+              }
+              // If item is an object with product info, extract the product ID
+              if (item.product && item.product._id) {
+                return item.product._id;
+              }
+              // If item has _id directly
+              if (item._id) {
+                return item._id;
+              }
+              return item;
+            });
             // Update local storage and state
-            localStorage.setItem('localWishlist', JSON.stringify(wishlistData));
-            dispatch({ type: 'SET_WISHLIST', payload: wishlistData });
+            localStorage.setItem('localWishlist', JSON.stringify(normalizedWishlist));
+            dispatch({ type: 'SET_WISHLIST', payload: normalizedWishlist });
+            console.log('Wishlist updated successfully:', normalizedWishlist);
           }
         }
       } catch (error) {
@@ -438,14 +473,33 @@ export const CartWishlistProvider = ({ children }) => {
     if (state.isAuthenticated) {
       try {
         const response = await wishlistAPI.removeFromWishlist(productId);
+        console.log('removeFromWishlist response:', response);
         if (response.data && response.data.success) {
           // Fetch updated wishlist from database
           const wishlistResponse = await wishlistAPI.getWishlist();
+          console.log('getWishlist response:', wishlistResponse);
           if (wishlistResponse.data && wishlistResponse.data.success) {
             const wishlistData = wishlistResponse.data.data.wishlist || [];
+            // Normalize wishlist data - extract product IDs
+            const normalizedWishlist = wishlistData.map(item => {
+              // If item is just a product ID string, return it
+              if (typeof item === 'string') {
+                return item;
+              }
+              // If item is an object with product info, extract the product ID
+              if (item.product && item.product._id) {
+                return item.product._id;
+              }
+              // If item has _id directly
+              if (item._id) {
+                return item._id;
+              }
+              return item;
+            });
             // Update local storage and state
-            localStorage.setItem('localWishlist', JSON.stringify(wishlistData));
-            dispatch({ type: 'SET_WISHLIST', payload: wishlistData });
+            localStorage.setItem('localWishlist', JSON.stringify(normalizedWishlist));
+            dispatch({ type: 'SET_WISHLIST', payload: normalizedWishlist });
+            console.log('Wishlist updated successfully:', normalizedWishlist);
           }
         }
       } catch (error) {
