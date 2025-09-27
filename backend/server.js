@@ -29,7 +29,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to database
-connectDB();
+connectDB(); 
 
 // Middleware
 app.use(helmet());
@@ -48,6 +48,12 @@ app.use(limiter);
 // Body parser middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware (for debugging)
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.originalUrl} - ${new Date().toISOString()}`);
+  next();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -72,32 +78,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Create default admin user if it doesn't exist
-const createDefaultAdmin = async () => {
-  try {
-    const adminExists = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
-    
-    if (!adminExists) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, salt);
-      
-      const admin = new Admin({
-        email: process.env.ADMIN_EMAIL,
-        password: hashedPassword,
-        name: 'Super Admin',
-        role: 'super_admin'
-      });
-      
-      await admin.save();
-      console.log('Default admin user created');
-      console.log(`Email: ${process.env.ADMIN_EMAIL}`);
-      console.log(`Password: ${process.env.ADMIN_PASSWORD}`);
-    }
-  } catch (error) {
-    console.error('Error creating default admin:', error.message);
-  }
-};
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -109,13 +89,20 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use('*', (req, res) => {
+  console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: `Route not found: ${req.method} ${req.originalUrl}`,
+    availableRoutes: [
+      'GET /api/products',
+      'GET /api/products/categories', 
+      'GET /api/products/featured',
+      'GET /api/products/search',
+      'GET /api/products/:id'
+    ]
   });
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  createDefaultAdmin();
 });

@@ -129,11 +129,11 @@ const WishlistPage = () => {
       <Navbar />
       
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
             <Link 
-              to="/shop" 
+              to="/products" 
               className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
             >
               <ArrowLeft size={20} />

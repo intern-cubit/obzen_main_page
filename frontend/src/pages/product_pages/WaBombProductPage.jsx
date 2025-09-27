@@ -23,17 +23,42 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../../components/LandingPage/Navbar';
 import FooterApple from '../../components/LandingPage/FooterApple';
 import InteractiveDemo from '../../components/InteractiveDemo';
+import { productAPI } from '../../services/ecommerceAPI';
 
 const WaBombProductPage = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedPlan, setSelectedPlan] = useState('pro');
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [activeFeatureTab, setActiveFeatureTab] = useState('dashboard');
+  const [productData, setProductData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch product data if ID is provided
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (id) {
+        try {
+          setLoading(true);
+          const response = await productAPI.getProduct(id);
+          setProductData(response.data.data);
+        } catch (error) {
+          console.error('Failed to fetch product:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+    
+    fetchProduct();
+  }, [id]);
 
   const product = {
     id: 'wa-bomb',

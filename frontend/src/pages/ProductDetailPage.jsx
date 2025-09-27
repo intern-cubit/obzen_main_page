@@ -18,11 +18,12 @@ import {
   X,
   MapPin,
   Clock,
-  Zap
+  Zap,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCartWishlist } from '../contexts/CartWishlistContext';
-import { productAPI } from '../services/ecommerceAPI';
+import { productAPI, cartAPI } from '../services/ecommerceAPI';
 import { formatPrice } from '../utils/priceUtils';
 import Navbar from '../components/LandingPage/Navbar';
 import FooterApple from '../components/LandingPage/FooterApple';
@@ -39,13 +40,16 @@ const ProductDetailPage = () => {
     isInCart, 
     isInWishlist,
     cartLoading,
-    wishlistLoading
+    wishlistLoading,
+    updateCartQuantity,
+    getCartItem
   } = useCartWishlist();
 
   // State for product details
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quantityUpdating, setQuantityUpdating] = useState(false);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -72,6 +76,10 @@ const ProductDetailPage = () => {
   const [reviews, setReviews] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
+  // Get current quantity from cart if product is already in cart
+  const cartItem = getCartItem(id);
+  const currentCartQuantity = cartItem ? cartItem.quantity : 0;
+
   useEffect(() => {
   // Removed Redux product fetch and cleanup. Use API fetch logic if needed.
   }, [id]);
@@ -92,6 +100,7 @@ const ProductDetailPage = () => {
   };
 
   const handleAddToCart = async () => {
+    const currentQuantity = isInCart(id) ? currentCartQuantity : quantity;
     const productInfo = {
       title: product?.title,
       subtitle: product?.subtitle,
@@ -99,7 +108,26 @@ const ProductDetailPage = () => {
       image: product?.backgroundImage || product?.images?.[0]
     };
     
-    addToCart(id, quantity, productInfo);
+    addToCart(id, currentQuantity, productInfo);
+  };
+
+  const handleQuantityChange = async (newQuantity) => {
+    if (newQuantity < 1) return;
+
+    if (isInCart(id)) {
+      // If product is in cart, update the cart quantity
+      setQuantityUpdating(true);
+      try {
+        await updateCartQuantity(id, newQuantity);
+      } catch (error) {
+        console.error('Failed to update cart quantity:', error);
+      } finally {
+        setQuantityUpdating(false);
+      }
+    } else {
+      // If product is not in cart, just update local state
+      setQuantity(newQuantity);
+    }
   };
 
   const handleAddToWishlist = async () => {
@@ -113,8 +141,9 @@ const ProductDetailPage = () => {
     }
 
     try {
+      const currentQuantity = isInCart(id) ? currentCartQuantity : quantity;
       const response = await cartAPI.buyNow(product._id, { 
-        quantity: selectedQuantity,
+        quantity: currentQuantity,
         variant: selectedVariant 
       });
       if (response.data.success) {
@@ -179,15 +208,26 @@ const ProductDetailPage = () => {
       <Navbar />
       
       {/* Breadcrumb */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b pt-20">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600">
-            <Link to="/" className="hover:text-blue-600">Home</Link>
-            <ChevronRight size={16} />
-            <Link to="/shop" className="hover:text-blue-600">Shop</Link>
-            <ChevronRight size={16} />
-            <span className="text-gray-900">{product.title}</span>
-          </nav>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => navigate(-1)}
+                className="text-gray-600 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100 transition-colors mr-2"
+                title="Go back"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <nav className="flex items-center space-x-2 text-sm text-gray-600">
+                <Link to="/" className="hover:text-blue-600">Home</Link>
+                <ChevronRight size={16} />
+                <Link to="/products" className="hover:text-blue-600">Products</Link>
+                <ChevronRight size={16} />
+                <span className="text-gray-900">{product.title}</span>
+              </nav>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -313,15 +353,23 @@ const ProductDetailPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
                 <div className="flex items-center border border-gray-300 rounded-lg">
                   <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="p-2 hover:bg-gray-100"
+                    onClick={() => handleQuantityChange((isInCart(id) ? currentCartQuantity : quantity) - 1)}
+                    disabled={quantityUpdating || (isInCart(id) ? currentCartQuantity <= 1 : quantity <= 1)}
+                    className="p-2 hover:bg-gray-100 disabled:opacity-50"
                   >
                     <Minus size={16} />
                   </button>
-                  <span className="px-4 py-2 min-w-[60px] text-center">{quantity}</span>
+                  <div className="px-4 py-2 min-w-[60px] text-center">
+                    {quantityUpdating ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full mx-auto"></div>
+                    ) : (
+                      <span>{isInCart(id) ? currentCartQuantity : quantity}</span>
+                    )}
+                  </div>
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="p-2 hover:bg-gray-100"
+                    onClick={() => handleQuantityChange((isInCart(id) ? currentCartQuantity : quantity) + 1)}
+                    disabled={quantityUpdating}
+                    className="p-2 hover:bg-gray-100 disabled:opacity-50"
                   >
                     <Plus size={16} />
                   </button>

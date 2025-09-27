@@ -98,7 +98,7 @@ const ContactApple = () => {
   }
 
   return (
-    <section className="bg-white py-16 lg:py-20">
+    <section id='contact' className="bg-white py-16 lg:py-20">
       <div className="max-w-4xl mx-auto px-4 lg:px-8">
         
         {/* Header */}

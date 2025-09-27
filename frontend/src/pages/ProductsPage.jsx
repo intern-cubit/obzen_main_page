@@ -13,12 +13,13 @@ import {
     LogOut,
     Package,
     Settings,
-    X
+    X,
+    ArrowLeft
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCartWishlist } from '../contexts/CartWishlistContext';
-import { productAPI } from '../services/ecommerceAPI';
+import { productAPI, cartAPI } from '../services/ecommerceAPI';
 import LoginModal from '../components/auth/LoginModal';
 import RegisterModal from '../components/auth/RegisterModal';
 
@@ -39,6 +40,7 @@ const ProductsPage = () => {
     const cartItemCount = getCartCount();
     const [products, setProducts] = useState([]);
     const [productsLoading, setProductsLoading] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -61,6 +63,15 @@ const ProductsPage = () => {
         pages: 1,
         total: 0
     });
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     useEffect(() => {
         const fetchProductsData = async () => {
@@ -140,17 +151,37 @@ const ProductsPage = () => {
         }));
     };
 
+    // Helper function to get the correct route for a product
+    const getProductRoute = (product) => {
+        if (!product.customPageRoute || product.customPageRoute === 'productDetailPage') {
+            return `/product/${product._id}`;
+        }
+        
+        switch (product.customPageRoute) {
+            case 'waBombProductPage':
+                return `/wa-bomb/${product._id}`;
+            case 'cubiViewProductPage':
+                return `/cubi-view/${product._id}`;
+            case 'mailStormProductPage':
+                return `/mail-storm/${product._id}`;
+            default:
+                return `/product/${product._id}`;
+        }
+    };
+
     const ProductCard = ({ product }) => {
+        const productRoute = getProductRoute(product);
+        
         return (
             <motion.div
-                layout
+                key={product._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
                 className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
             >
                 <div className="relative">
-                    <Link to={`/product/${product._id}`}>
+                    <Link to={productRoute}>
                         <img
                             src={product.backgroundImage}
                             alt={product.title}
@@ -197,7 +228,7 @@ const ProductsPage = () => {
                         <span className="text-sm text-gray-600">({product.rating.count})</span>
                     </div>
 
-                    <Link to={`/product/${product._id}`}>
+                    <Link to={productRoute}>
                         <h3 className="text-xl font-bold text-gray-900 mb-1 hover:text-blue-600 transition-colors cursor-pointer">
                             {product.title}
                         </h3>
@@ -236,10 +267,10 @@ const ProductsPage = () => {
                             {cartLoading
                                 ? 'Adding...'
                                 : !product.inStock
-                                ? 'Out of Stock'
-                                : isInCart(product._id)
-                                    ? 'Go to Cart'
-                                    : 'Add to Cart'
+                                    ? 'Out of Stock'
+                                    : isInCart(product._id)
+                                        ? 'Go to Cart'
+                                        : 'Add to Cart'
                             }
                         </button>
 
@@ -262,32 +293,41 @@ const ProductsPage = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <header className="bg-white shadow-sm sticky top-0 z-40">
+            <header className={`transition-all duration-500 bg-gradient-to-l from-black/70 via-black/80 to-black/70`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
-                        <Link to="/" className="text-2xl font-bold text-blue-600">
-                            CuBIT Store
-                        </Link>
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={() => navigate('/')}
+                                className="text-neutral-300 hover:text-white transition-colors p-2 rounded-lg hover:bg-neutral-800/50"
+                                title="Back to Home"
+                            >
+                                <ArrowLeft size={24} />
+                            </button>
+                            <Link to="/" className="text-2xl font-bold">
+                                <span className="font-thin text-white text-3xl font-sans">CuBIT Dynamics</span>
+                            </Link>
+                        </div>
 
-                        {/* Search Bar */}
+                        {/* Search Bar - Styled for the new dark theme */}
                         <div className="flex-1 max-w-lg mx-8">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={20} />
                                 <input
                                     type="text"
                                     placeholder="Search products..."
                                     value={filters.search}
                                     onChange={(e) => handleFilterChange('search', e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full pl-10 pr-4 py-2 bg-neutral-800/50 border border-neutral-600 text-neutral-200 rounded-lg placeholder:text-neutral-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-neutral-800 transition-colors"
                                 />
                             </div>
                         </div>
 
-                        {/* User Menu */}
-                        <div className="flex items-center gap-4">
+                        {/* User Menu - Icons updated for better visibility */}
+                        <div className="flex items-center gap-6">
                             {/* Wishlist */}
                             <Link to="/wishlist" className="relative">
-                                <Heart size={24} className="text-gray-600 hover:text-red-600" />
+                                <Heart size={24} className="text-neutral-300 hover:text-red-500 transition-colors" />
                                 {wishlist.length > 0 && (
                                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                                         {wishlist.length}
@@ -297,9 +337,9 @@ const ProductsPage = () => {
 
                             {/* Cart */}
                             <Link to="/cart" className="relative">
-                                <ShoppingCart size={24} className="text-gray-600 hover:text-blue-600" />
+                                <ShoppingCart size={24} className="text-neutral-300 hover:text-blue-500 transition-colors" />
                                 {cartItemCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                    <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                                         {cartItemCount}
                                     </span>
                                 )}
@@ -310,21 +350,22 @@ const ProductsPage = () => {
                                 <div className="relative">
                                     <button
                                         onClick={() => setShowUserMenu(!showUserMenu)}
-                                        className="flex items-center gap-2 text-gray-700 hover:text-blue-600"
+                                        className="flex items-center gap-2 text-neutral-300 hover:text-white transition-colors"
                                     >
                                         <User size={24} />
-                                        <span className="hidden sm:block">{user?.firstName}</span>
+                                        <span className="hidden sm:block font-medium">{user?.firstName}</span>
                                         <ChevronDown size={16} />
                                     </button>
 
+                                    {/* Dropdown Menu - Restyled to match the glassy theme */}
                                     {showUserMenu && (
-                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
-                                            <Link to="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                                                <Settings size={16} className="inline mr-2" />
+                                        <div className="absolute right-0 mt-3 w-48 bg-neutral-800/80 backdrop-blur-lg border border-neutral-700 rounded-lg shadow-xl py-2 z-50">
+                                            <Link to="/profile" className="flex items-center px-4 py-2 text-neutral-300 hover:bg-neutral-700/50">
+                                                <Settings size={16} className="mr-2" />
                                                 Profile
                                             </Link>
-                                            <Link to="/orders" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                                                <Package size={16} className="inline mr-2" />
+                                            <Link to="/orders" className="flex items-center px-4 py-2 text-neutral-300 hover:bg-neutral-700/50">
+                                                <Package size={16} className="mr-2" />
                                                 Orders
                                             </Link>
                                             <button
@@ -332,9 +373,9 @@ const ProductsPage = () => {
                                                     logout();
                                                     setShowUserMenu(false);
                                                 }}
-                                                className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                                                className="flex items-center w-full text-left px-4 py-2 text-neutral-300 hover:bg-neutral-700/50"
                                             >
-                                                <LogOut size={16} className="inline mr-2" />
+                                                <LogOut size={16} className="mr-2" />
                                                 Logout
                                             </button>
                                         </div>
@@ -344,13 +385,13 @@ const ProductsPage = () => {
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={() => setShowLoginModal(true)}
-                                        className="px-4 py-2 text-blue-600 hover:text-blue-700"
+                                        className="px-4 py-2 text-neutral-300 font-medium hover:text-white transition-colors"
                                     >
                                         Login
                                     </button>
                                     <button
                                         onClick={() => setShowRegisterModal(true)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                        className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
                                     >
                                         Sign Up
                                     </button>
@@ -361,7 +402,7 @@ const ProductsPage = () => {
                 </div>
             </header>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
                 {/* Filters and Controls */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
@@ -503,14 +544,12 @@ const ProductsPage = () => {
                             ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
                             : 'grid-cols-1'
                             }`}>
-                            <AnimatePresence>
-                                {products.map((product) => (
-                                    <ProductCard
-                                        key={product._id}
-                                        product={product}
-                                    />
-                                ))}
-                            </AnimatePresence>
+                            {products.map((product) => (
+                                <ProductCard
+                                    key={product._id}
+                                    product={product}
+                                />
+                            ))}
                         </div>
 
                         {/* Pagination */}

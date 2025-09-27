@@ -14,6 +14,10 @@ const ProductsAdmin = () => {
       buttonColor: 'bg-blue-600 hover:bg-blue-700',
       link: '#',
       description: 'A powerful IoT device for smart automation and monitoring.',
+      category: 'Electronics',
+      price: 299.99,
+      sku: 'ELE-IOT-001',
+      stock: 50,
       order: 1,
       isActive: true,
       isDefault: true
@@ -27,6 +31,10 @@ const ProductsAdmin = () => {
       buttonColor: 'bg-green-600 hover:bg-green-700',
       link: '#',
       description: 'Professional PCB design and prototyping services.',
+      category: 'Design',
+      price: 199.99,
+      sku: 'DES-PCB-002',
+      stock: 25,
       order: 2,
       isActive: true,
       isDefault: true
@@ -40,6 +48,10 @@ const ProductsAdmin = () => {
       buttonColor: 'bg-purple-600 hover:bg-purple-700',
       link: '#',
       description: 'Advanced AI analytics for business intelligence.',
+      category: 'Software',
+      price: 599.99,
+      sku: 'SOF-AIB-003',
+      stock: 10,
       order: 3,
       isActive: true,
       isDefault: true
@@ -53,6 +65,10 @@ const ProductsAdmin = () => {
       buttonColor: 'bg-orange-600 hover:bg-orange-700',
       link: '#',
       description: 'Complete automation solutions for industry.',
+      category: 'Systems',
+      price: 999.99,
+      sku: 'SYS-AUT-004',
+      stock: 5,
       order: 4,
       isActive: true,
       isDefault: true
@@ -71,7 +87,12 @@ const ProductsAdmin = () => {
     buttonColor: 'bg-blue-600 hover:bg-blue-700',
     link: '#',
     description: '',
-    order: 0
+    order: 0,
+    category: '',
+    price: '',
+    sku: '',
+    stock: 0,
+    customPageRoute: ''
   });
 
   useEffect(() => {
@@ -81,12 +102,13 @@ const ProductsAdmin = () => {
   const fetchProducts = async () => {
     try {
       const response = await productService.getProductsAdmin();
-      if (response.success && response.data.length > 0) {
-        setProducts(response.data);
+      if (response.success && response.data && response.data.products && response.data.products.length > 0) {
+        setProducts(response.data.products);
       } else {
         setProducts(defaultProducts);
       }
     } catch (error) {
+      console.error('Failed to fetch products:', error);
       setProducts(defaultProducts);
       toast.error('Failed to fetch products');
     } finally {
@@ -96,18 +118,37 @@ const ProductsAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.title || !formData.subtitle || !formData.category || !formData.price || !formData.sku) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Ensure price is a number
+    const submissionData = {
+      ...formData,
+      price: parseFloat(formData.price),
+      stock: parseInt(formData.stock) || 0
+    };
+
     try {
       if (editingProduct && !editingProduct.isDefault) {
-        await productService.updateProduct(editingProduct._id, formData);
+        await productService.updateProduct(editingProduct._id, submissionData);
         toast.success('Product updated successfully!');
       } else {
-        await productService.createProduct(formData);
+        await productService.createProduct(submissionData);
         toast.success('Product created successfully!');
       }
       fetchProducts();
       handleCloseModal();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to save product');
+      console.error('Product save error:', error);
+      if (error.response?.data?.message?.includes('sku')) {
+        toast.error('SKU must be unique. Please choose a different SKU.');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to save product');
+      }
     }
   };
 
@@ -165,7 +206,12 @@ const ProductsAdmin = () => {
       buttonColor: product.buttonColor,
       link: product.link,
       description: product.description,
-      order: product.order
+      order: product.order,
+      category: product.category || '',
+      price: product.price || '',
+      sku: product.sku || '',
+      stock: product.stock || 0,
+      customPageRoute: product.customPageRoute || ''
     });
     setShowModal(true);
   };
@@ -217,15 +263,39 @@ const ProductsAdmin = () => {
       buttonColor: 'bg-blue-600 hover:bg-blue-700',
       link: '#',
       description: '',
-      order: 0
+      order: 0,
+      category: '',
+      price: '',
+      sku: '',
+      stock: 0,
+      customPageRoute: ''
     });
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+
+    // Auto-generate SKU when title or category changes
+    if (name === 'title' || name === 'category') {
+      const title = name === 'title' ? value : formData.title;
+      const category = name === 'category' ? value : formData.category;
+      
+      if (title && category && !editingProduct) {
+        const sku = generateSKU(category, title);
+        setFormData(prev => ({ ...prev, [name]: value, sku }));
+      }
+    }
+  };
+
+  const generateSKU = (category, title) => {
+    const categoryPrefix = category.toUpperCase().substring(0, 3);
+    const titlePrefix = title.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 3);
+    const timestamp = Date.now().toString().slice(-4);
+    return `${categoryPrefix}-${titlePrefix}-${timestamp}`;
   };
 
   if (isLoading) {
@@ -270,7 +340,7 @@ const ProductsAdmin = () => {
               </div>
               
               <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       product.isActive 
@@ -286,6 +356,21 @@ const ProductsAdmin = () => {
                     )}
                   </div>
                   <span className="text-sm text-gray-500">Order: {product.order}</span>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-1">
+                    <span className="font-medium">Category:</span> {product.category}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-1">
+                    <span className="font-medium">Price:</span> ${product.price}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-1">
+                    <span className="font-medium">SKU:</span> {product.sku}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Stock:</span> {product.stock}
+                  </p>
                 </div>
                 
                 <div className="flex space-x-2">
@@ -342,15 +427,16 @@ const ProductsAdmin = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">
+              <h3 className="text-lg font-semibold mb-2">
                 {editingProduct && !editingProduct.isDefault ? 'Edit Product' : 'Add New Product'}
               </h3>
+              <p className="text-sm text-gray-600 mb-4">Fields marked with * are required</p>
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Title
+                      Title *
                     </label>
                     <input
                       type="text"
@@ -364,7 +450,7 @@ const ProductsAdmin = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Subtitle
+                      Subtitle *
                     </label>
                     <input
                       type="text"
@@ -375,6 +461,70 @@ const ProductsAdmin = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
+                    </label>
+                    <input
+                      type="text"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      required
+                      placeholder="e.g., Electronics, IoT"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Price *
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleChange}
+                      required
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stock Quantity
+                    </label>
+                    <input
+                      type="number"
+                      name="stock"
+                      value={formData.stock}
+                      onChange={handleChange}
+                      min="0"
+                      placeholder="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    SKU (Stock Keeping Unit) *
+                  </label>
+                  <input
+                    type="text"
+                    name="sku"
+                    value={formData.sku}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g., IOT-001, PCB-DEV-100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
                 </div>
 
                 <div>
@@ -404,12 +554,13 @@ const ProductsAdmin = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
+                    Description *
                   </label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
+                    required
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
@@ -476,6 +627,27 @@ const ProductsAdmin = () => {
                     onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Custom Page Route
+                  </label>
+                  <select
+                    name="customPageRoute"
+                    value={formData.customPageRoute}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="">Default (ProductDetailPage)</option>
+                    <option value="waBombProductPage">WA Bomb Product Page</option>
+                    <option value="cubiViewProductPage">CubiView Product Page</option>
+                    <option value="productDetailPage">Product Detail Page</option>
+                    <option value="mailStormProductPage">Mail Storm Product Page</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Select which page should open when this product is clicked. If no custom route is specified, it will open the default ProductDetailPage.
+                  </p>
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">

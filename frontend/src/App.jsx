@@ -73,9 +73,16 @@ const App = () => {
                         <Route path="/cart" element={<CartPage />} />
                         <Route path="/wishlist" element={<WishlistPage />} />
                         <Route path="/checkout" element={<CheckoutPage />} />
+                        
+                        {/* Static product pages */}
                         <Route path="/products/wa-bomb" element={<WaBombProductPage />} />
                         <Route path="/products/mail-storm" element={<MailStormProductPage />} />
                         <Route path="/products/cubi-view" element={<CubiViewProductPage />} />
+                        
+                        {/* Dynamic custom product pages */}
+                        <Route path="/wa-bomb/:id" element={<WaBombProductPage />} />
+                        <Route path="/cubi-view/:id" element={<CubiViewProductPage />} />
+                        <Route path="/mail-storm/:id" element={<MailStormProductPage />} />
 
                         {/* Admin Routes */}
                         <Route path="/admin/login" element={<AdminLogin />} />

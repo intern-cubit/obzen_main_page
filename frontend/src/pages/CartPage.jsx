@@ -104,17 +104,28 @@ const CartPage = () => {
     enrichCart();
   }, [contextCart]);
 
-  const updateQuantity = async (itemId, newQuantity) => {
+  const updateQuantity = async (item, newQuantity) => {
+    if (updating[item.productId]) return; // Prevent multiple simultaneous updates
+    
     if (newQuantity <= 0) {
-      removeFromContextCart(itemId);
+      removeFromContextCart(item.productId);
       return;
     }
 
-    updateCartQuantity(itemId, newQuantity);
+    setUpdating(prev => ({ ...prev, [item.productId]: true }));
+    
+    try {
+      // Use productId for context update
+      await updateCartQuantity(item.productId, newQuantity);
+    } catch (error) {
+      console.error('Failed to update cart quantity:', error);
+    } finally {
+      setUpdating(prev => ({ ...prev, [item.productId]: false }));
+    }
   };
 
-  const removeItem = async (itemId) => {
-    removeFromContextCart(itemId);
+  const removeItem = async (item) => {
+    removeFromContextCart(item.productId);
   };
 
   const clearCartHandler = async () => {
@@ -153,11 +164,11 @@ const CartPage = () => {
       <Navbar />
       
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
             <Link 
-              to="/shop" 
+              to="/products" 
               className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
             >
               <ArrowLeft size={20} />
@@ -262,18 +273,22 @@ const CartPage = () => {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center border rounded-lg">
                                 <button
-                                  onClick={() => updateQuantity(item._id || item.productId, item.quantity - 1)}
-                                  disabled={updating[item._id || item.productId] || item.quantity <= 1}
+                                  onClick={() => updateQuantity(item, item.quantity - 1)}
+                                  disabled={updating[item.productId] || item.quantity <= 1}
                                   className="p-2 hover:bg-gray-100 disabled:opacity-50"
                                 >
                                   <Minus size={16} />
                                 </button>
-                                <span className="px-4 py-2 font-medium">
-                                  {item.quantity}
-                                </span>
+                                <div className="px-4 py-2 font-medium min-w-[60px] flex items-center justify-center">
+                                  {updating[item.productId] ? (
+                                    <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full"></div>
+                                  ) : (
+                                    <span>{item.quantity}</span>
+                                  )}
+                                </div>
                                 <button
-                                  onClick={() => updateQuantity(item._id || item.productId, item.quantity + 1)}
-                                  disabled={updating[item._id || item.productId]}
+                                  onClick={() => updateQuantity(item, item.quantity + 1)}
+                                  disabled={updating[item.productId]}
                                   className="p-2 hover:bg-gray-100 disabled:opacity-50"
                                 >
                                   <Plus size={16} />
@@ -281,7 +296,7 @@ const CartPage = () => {
                               </div>
                               
                               <button
-                                onClick={() => removeItem(item._id || item.productId)}
+                                onClick={() => removeItem(item)}
                                 disabled={updating[item._id || item.productId]}
                                 className="text-red-600 hover:text-red-700 p-2"
                               >

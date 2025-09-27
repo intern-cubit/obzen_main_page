@@ -1,5 +1,6 @@
 import Product from '../models/Product.js';
 import User from '../models/User.js';
+import mongoose from 'mongoose';
 
 export const getProducts = async (req, res) => {
   try {
@@ -91,14 +92,100 @@ export const getProducts = async (req, res) => {
   }
 };
 
+// Admin function to get all products (including inactive ones)
+export const getProductsAdmin = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 50,
+      category,
+      sort = 'createdAt',
+      order = 'desc',
+      search,
+      isActive
+    } = req.query;
+
+    // Build query (no isActive filter by default for admin)
+    const query = {};
+
+    if (category) {
+      query.category = { $regex: category, $options: 'i' };
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { subtitle: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (isActive !== undefined) {
+      query.isActive = isActive === 'true';
+    }
+
+    // Build sort object
+    const sortObj = {};
+    sortObj[sort] = order === 'desc' ? -1 : 1;
+
+    // Execute query with pagination
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sort: sortObj,
+      populate: {
+        path: 'reviews.user',
+        select: 'firstName lastName avatar'
+      }
+    };
+
+    const products = await Product.paginate(query, options);
+
+    res.json({
+      success: true,
+      data: {
+        products: products.docs,
+        pagination: {
+          current: products.page,
+          pages: products.totalPages,
+          total: products.totalDocs,
+          hasNext: products.hasNextPage,
+          hasPrev: products.hasPrevPage
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get products admin error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
 export const getProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const product = await Product.findOne({
-      $or: [{ _id: id }, { seoUrl: id }],
-      isActive: true
-    }).populate({
+    // Build query based on whether id is a valid ObjectId or not
+    let query;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      // If id is a valid ObjectId, search by both _id and seoUrl
+      query = {
+        $or: [{ _id: id }, { seoUrl: id }],
+        isActive: true
+      };
+    } else {
+      // If id is not a valid ObjectId, only search by seoUrl
+      query = {
+        seoUrl: id,
+        isActive: true
+      };
+    }
+
+    const product = await Product.findOne(query).populate({
       path: 'reviews.user',
       select: 'firstName lastName avatar'
     });
@@ -518,7 +605,7 @@ export const updateCartQuantityByProduct = async (req, res) => {
     // Find cart item by product ID and variant
     const cartItemIndex = user.cart.findIndex(item => 
       item.product.toString() === productId &&
-      JSON.stringify(item.variant) === JSON.stringify(variant || {})
+      JSON.stringify(item.variant || {}) === JSON.stringify(variant || {})
     );
 
     if (cartItemIndex === -1) {
@@ -761,6 +848,93 @@ export const buyNow = async (req, res) => {
 
   } catch (error) {
     console.error('Buy now error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+// Admin CRUD Operations
+export const createProduct = async (req, res) => {
+  try {
+    const productData = req.body;
+    
+    // Generate SEO URL if not provided
+    if (!productData.seoUrl) {
+      productData.seoUrl = productData.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+    }
+    
+    const product = new Product(productData);
+    await product.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Product created successfully',
+      data: { product }
+    });
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const product = await Product.findByIdAndUpdate(id, updateData, { 
+      new: true, 
+      runValidators: true 
+    });
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Product updated successfully',
+      data: { product }
+    });
+  } catch (error) {
+    console.error('Update product error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const product = await Product.findByIdAndDelete(id);
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Product deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete product error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

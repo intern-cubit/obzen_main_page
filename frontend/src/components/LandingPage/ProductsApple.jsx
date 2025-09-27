@@ -4,7 +4,11 @@ import { productService } from '../../services/contentService';
 
 const ProductsApple = () => {
     const navigate = useNavigate();
-    const [products, setProducts] = useState([
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Default fallback products (only used if API fails)
+    const defaultProducts = [
         {
             id: 1,
             title: 'CuBIT IoT Pro',
@@ -41,7 +45,7 @@ const ProductsApple = () => {
             buttonColor: 'bg-green-600 hover:bg-green-700',
             link: '#'
         }
-    ]);
+    ];
 
     useEffect(() => {
         fetchProducts();
@@ -49,20 +53,50 @@ const ProductsApple = () => {
 
     const fetchProducts = async () => {
         try {
+            setLoading(true);
             const response = await productService.getProducts();
-            if (response.success && response.data.length > 0) {
-                setProducts(response.data);
+            if (response.success && response.data && response.data.products && response.data.products.length > 0) {
+                // Transform database products to match the expected format
+                const transformedProducts = response.data.products.slice(0, 4).map((product, index) => ({
+                    id: product._id,
+                    title: product.title,
+                    subtitle: product.subtitle || 'Discover the future of technology.',
+                    backgroundImage: product.backgroundImage,
+                    textColor: 'text-white',
+                    buttonColor: `bg-${['blue', 'purple', 'orange', 'green'][index % 4]}-600 hover:bg-${['blue', 'purple', 'orange', 'green'][index % 4]}-700`,
+                    link: `/products/${product._id}`
+                }));
+                
+                // If we have fewer than 4 products, fill with defaults
+                const finalProducts = [...transformedProducts];
+                while (finalProducts.length < 4 && finalProducts.length < defaultProducts.length) {
+                    finalProducts.push(defaultProducts[finalProducts.length]);
+                }
+                
+                setProducts(finalProducts);
+            } else {
+                // Use default products if API fails or returns no products
+                setProducts(defaultProducts);
             }
         } catch (error) {
             console.error('Failed to fetch products:', error);
             // Use default products if API fails
+            setProducts(defaultProducts);
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <div className="w-full py-12 lg:py-16 bg-gray-50">
-            {/* First Row */}
-            <div className="flex flex-col lg:flex-row gap-1 lg:gap-2 lg:mx-2 mx-1">
+            {loading ? (
+                <div className="flex justify-center items-center h-96">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+            ) : (
+                <>
+                    {/* First Row */}
+                    <div className="flex flex-col lg:flex-row gap-1 lg:gap-2 lg:mx-2 mx-1">
                 {products.slice(0, 2).map((product) => (
                     <div
                         key={product.id}
@@ -150,6 +184,8 @@ const ProductsApple = () => {
                     Explore our complete product catalog with detailed specifications
                 </p>
             </div>
+                </>
+            )}
         </div>
     );
 };
