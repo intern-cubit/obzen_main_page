@@ -1,4 +1,7 @@
 import User from '../models/User.js';
+import Order from '../models/Order.js';
+import Product from '../models/Product.js';
+import Device from '../models/Device.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendEmail } from '../utils/emailService.js';
@@ -568,6 +571,128 @@ export const refreshToken = async (req, res) => {
     res.status(401).json({
       success: false,
       message: 'Invalid refresh token'
+    });
+  }
+};
+
+// Handle software purchase payment success
+export const handleSoftwarePurchaseSuccess = async (req, res) => {
+  try {
+    console.log('Software purchase request:', req.body);
+    const { productId, quantity, validityType, customValidityDate, totalAmount } = req.body;
+    const { id: userId } = req.user;
+
+    // Validate input
+    if (!productId || !quantity || !validityType) {
+      console.log('Validation failed: missing required fields');
+      return res.status(400).json({
+        success: false,
+        message: 'Product ID, quantity, and validity type are required'
+      });
+    }
+
+    // Get product details
+    console.log('Fetching product:', productId);
+    const product = await Product.findById(productId);
+    if (!product || !product.isSoftware) {
+      console.log('Product not found or not software:', product ? product.title : 'Not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Software product not found'
+      });
+    }
+
+    console.log('Product found:', product.title, product.softwareType);
+
+    // Create order
+    const subtotal = product.price * quantity;
+    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    
+    const orderData = {
+      orderNumber,
+      user: userId,
+      items: [{
+        product: productId,
+        quantity: parseInt(quantity),
+        price: product.price
+      }],
+      totalAmount: totalAmount || subtotal,
+      subtotal: subtotal,
+      shippingCost: 0, // Software is digital, no shipping
+      tax: 0,
+      paymentStatus: 'completed', // Use correct enum value
+      paymentMethod: 'card', // Use a valid enum value
+      status: 'delivered', // Software delivery is instant - use correct enum value
+      shippingAddress: {
+        fullName: 'Software License',
+        mobile: '0000000000',
+        pincode: '000000',
+        locality: 'Digital Delivery',
+        address: 'Digital Delivery',
+        city: 'N/A',
+        state: 'N/A'
+      }
+    };
+
+    console.log('Creating order with data:', JSON.stringify(orderData, null, 2));
+    const order = new Order(orderData);
+    await order.save();
+    console.log('Order created successfully:', order._id);
+
+    // Calculate expiration date
+    let expirationDate;
+    if (validityType === "CUSTOM_DATE" && customValidityDate) {
+      const parsedDate = new Date(customValidityDate);
+      if (!isNaN(parsedDate.getTime()) && parsedDate > new Date()) {
+        parsedDate.setHours(23, 59, 59, 999);
+        expirationDate = parsedDate;
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid custom validity date'
+        });
+      }
+    } else {
+      expirationDate = new Date('9999-12-31T23:59:59Z'); // Lifetime
+    }
+
+    // Create software licenses
+    const licenses = [];
+    for (let i = 0; i < quantity; i++) {
+      const tempActivationKey = `TEMP-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+      
+      const license = new Device({
+        systemId: '', // Will be set during activation
+        activationKey: tempActivationKey,
+        adminId: userId,
+        deviceStatus: "inactive",
+        deviceActivation: false,
+        expirationDate,
+        appName: product.softwareType,
+        orderId: order._id,
+        productId: productId,
+        validityType,
+        licenseStatus: "inactive"
+      });
+
+      await license.save();
+      licenses.push(license);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: `Software purchase successful! ${quantity} license(s) created.`,
+      data: {
+        order,
+        licenses: licenses.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Software purchase error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process software purchase'
     });
   }
 };

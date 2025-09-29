@@ -14,7 +14,8 @@ import {
     Package,
     Settings,
     X,
-    ArrowLeft
+    ArrowLeft,
+    Key
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -22,6 +23,7 @@ import { useCartWishlist } from '../contexts/CartWishlistContext';
 import { productAPI, cartAPI } from '../services/ecommerceAPI';
 import LoginModal from '../components/auth/LoginModal';
 import RegisterModal from '../components/auth/RegisterModal';
+import SoftwarePurchaseModal from '../components/modals/SoftwarePurchaseModal';
 
 const ProductsPage = () => {
     const { user, isAuthenticated, logout } = useAuth();
@@ -58,6 +60,8 @@ const ProductsPage = () => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
+    const [showSoftwarePurchaseModal, setShowSoftwarePurchaseModal] = useState(false);
+    const [selectedSoftwareProduct, setSelectedSoftwareProduct] = useState(null);
     const [pagination, setPagination] = useState({
         current: 1,
         pages: 1,
@@ -110,9 +114,21 @@ const ProductsPage = () => {
     };
 
     const handleBuyNow = async (productId) => {
+        const product = products.find(p => p._id === productId);
+        
+        // Check if it's a software product
+        if (product && product.isSoftware) {
+            if (!isAuthenticated) {
+                setShowLoginModal(true);
+                return;
+            }
+            setSelectedSoftwareProduct(product);
+            setShowSoftwarePurchaseModal(true);
+            return;
+        }
+
         if (!isAuthenticated) {
             // For non-authenticated users, store in cart and redirect to login
-            const product = products.find(p => p._id === productId);
             const productInfo = {
                 title: product?.title,
                 subtitle: product?.subtitle,
@@ -142,6 +158,13 @@ const ProductsPage = () => {
 
     const handleAddToWishlist = async (productId) => {
         toggleWishlist(productId);
+    };
+
+    const handleSoftwarePurchaseSuccess = (purchaseData) => {
+        setShowSoftwarePurchaseModal(false);
+        setSelectedSoftwareProduct(null);
+        // Optional: Show success message or redirect to My Software page
+        console.log('Software purchase successful:', purchaseData);
     };
 
     const handleFilterChange = (key, value) => {
@@ -251,39 +274,57 @@ const ProductsPage = () => {
                     </div>
 
                     <div className="flex gap-2">
-                        <button
-                            onClick={() => isInCart(product._id) ? navigate('/cart') : handleAddToCart(product._id)}
-                            disabled={!product.inStock || cartLoading}
-                            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${!product.inStock
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : isInCart(product._id)
-                                    ? 'bg-green-500 text-white hover:bg-green-600'
-                                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                                }`}
-                        >
-                            {cartLoading && (
-                                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                            )}
-                            {cartLoading
-                                ? 'Adding...'
-                                : !product.inStock
-                                    ? 'Out of Stock'
-                                    : isInCart(product._id)
-                                        ? 'Go to Cart'
-                                        : 'Add to Cart'
-                            }
-                        </button>
+                        {/* Show different buttons for software vs regular products */}
+                        {product.isSoftware ? (
+                            // Software products - only show Buy Now
+                            <button
+                                onClick={() => handleBuyNow(product._id)}
+                                disabled={!product.inStock}
+                                className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${!product.inStock
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-green-600 text-white hover:bg-green-700'
+                                    }`}
+                            >
+                                {!product.inStock ? 'Out of Stock' : 'Buy Software License'}
+                            </button>
+                        ) : (
+                            // Regular products - show both Add to Cart and Buy Now
+                            <>
+                                <button
+                                    onClick={() => isInCart(product._id) ? navigate('/cart') : handleAddToCart(product._id)}
+                                    disabled={!product.inStock || cartLoading}
+                                    className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${!product.inStock
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : isInCart(product._id)
+                                            ? 'bg-green-500 text-white hover:bg-green-600'
+                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                        }`}
+                                >
+                                    {cartLoading && (
+                                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                    )}
+                                    {cartLoading
+                                        ? 'Adding...'
+                                        : !product.inStock
+                                            ? 'Out of Stock'
+                                            : isInCart(product._id)
+                                                ? 'Go to Cart'
+                                                : 'Add to Cart'
+                                    }
+                                </button>
 
-                        <button
-                            onClick={() => handleBuyNow(product._id)}
-                            disabled={!product.inStock}
-                            className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors ${!product.inStock
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-orange-600 text-white hover:bg-orange-700'
-                                }`}
-                        >
-                            {!product.inStock ? 'Out of Stock' : 'Buy Now'}
-                        </button>
+                                <button
+                                    onClick={() => handleBuyNow(product._id)}
+                                    disabled={!product.inStock}
+                                    className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-colors ${!product.inStock
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-orange-600 text-white hover:bg-orange-700'
+                                        }`}
+                                >
+                                    {!product.inStock ? 'Out of Stock' : 'Buy Now'}
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </motion.div>
@@ -367,6 +408,10 @@ const ProductsPage = () => {
                                             <Link to="/orders" className="flex items-center px-4 py-2 text-neutral-300 hover:bg-neutral-700/50">
                                                 <Package size={16} className="mr-2" />
                                                 Orders
+                                            </Link>
+                                            <Link to="/my-software" className="flex items-center px-4 py-2 text-neutral-300 hover:bg-neutral-700/50">
+                                                <Key size={16} className="mr-2" />
+                                                My Software
                                             </Link>
                                             <button
                                                 onClick={() => {
@@ -591,6 +636,15 @@ const ProductsPage = () => {
                     setShowRegisterModal(false);
                     setShowLoginModal(true);
                 }}
+            />
+            <SoftwarePurchaseModal
+                isOpen={showSoftwarePurchaseModal}
+                onClose={() => {
+                    setShowSoftwarePurchaseModal(false);
+                    setSelectedSoftwareProduct(null);
+                }}
+                product={selectedSoftwareProduct}
+                onPurchaseSuccess={handleSoftwarePurchaseSuccess}
             />
         </div>
     );

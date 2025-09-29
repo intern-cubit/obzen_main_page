@@ -11,7 +11,8 @@ import {
   addAddress,
   updateAddress,
   deleteAddress,
-  refreshToken
+  refreshToken,
+  handleSoftwarePurchaseSuccess
 } from '../controllers/userController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -37,5 +38,8 @@ router.put('/change-password', changePassword);
 router.post('/addresses', addAddress);
 router.put('/addresses/:addressId', updateAddress);
 router.delete('/addresses/:addressId', deleteAddress);
+
+// Software purchase
+router.post('/software/purchase', handleSoftwarePurchaseSuccess);
 
 export default router;

@@ -72,6 +72,31 @@ const productSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  // Software-specific fields
+  isSoftware: {
+    type: Boolean,
+    default: false
+  },
+  softwareType: {
+    type: String,
+    enum: ['WA BOMB', 'Email Storm', 'Cubi-View'],
+    required: function() {
+      return this.isSoftware;
+    }
+  },
+  licenseType: {
+    type: String,
+    enum: ['LIFETIME', 'MONTHLY'],
+    required: function() {
+      return this.isSoftware;
+    }
+  },
+  validityPeriod: {
+    type: Number, // in days for monthly licenses
+    required: function() {
+      return this.isSoftware && this.licenseType === 'MONTHLY';
+    }
+  },
   brand: {
     type: String,
     trim: true

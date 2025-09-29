@@ -10,7 +10,11 @@ export const createOrder = async (req, res) => {
       shippingAddress,
       billingAddress,
       paymentMethod,
-      couponCode
+      couponCode,
+      subtotal: frontendSubtotal,
+      shippingCost: frontendShippingCost,
+      tax: frontendTax,
+      totalAmount: frontendTotal
     } = req.body;
     const userId = req.user.id;
 
@@ -19,35 +23,42 @@ export const createOrder = async (req, res) => {
     const validatedItems = [];
 
     for (const item of items) {
-      const product = await Product.findById(item.productId);
+      // Handle both productId (old format) and product (new format)
+      const productId = item.productId || item.product;
+      const product = await Product.findById(productId);
+      
       if (!product) {
         return res.status(400).json({
           success: false,
-          message: `Product ${item.productId} not found`
+          message: `Product ${productId} not found`
         });
       }
 
-      if (!product.inStock || product.stock < item.quantity) {
-        return res.status(400).json({
-          success: false,
-          message: `Product ${product.title} is out of stock or insufficient quantity`
-        });
+      // For now, skip stock validation for software products or if not specified
+      if (product.isSoftware !== true && product.stock !== undefined) {
+        if (!product.inStock || product.stock < item.quantity) {
+          return res.status(400).json({
+            success: false,
+            message: `Product ${product.title} is out of stock or insufficient quantity`
+          });
+        }
       }
 
-      const itemTotal = product.price * item.quantity;
+      const itemTotal = item.price * item.quantity; // Use price from frontend (may include discounts)
       subtotal += itemTotal;
 
       validatedItems.push({
         product: product._id,
         quantity: item.quantity,
-        price: product.price,
+        price: item.price, // Use price from frontend
         variant: item.variant
       });
     }
 
-    // Calculate shipping and tax
-    const shippingCost = subtotal > 500 ? 0 : 50; // Free shipping above ₹500
-    const tax = subtotal * 0.18; // 18% GST
+    // Use frontend calculations if provided, otherwise calculate here
+    const finalSubtotal = frontendSubtotal || subtotal;
+    const shippingCost = frontendShippingCost !== undefined ? frontendShippingCost : (subtotal > 500 ? 0 : 50);
+    const tax = frontendTax !== undefined ? frontendTax : (subtotal * 0.08); // 8% tax to match frontend
 
     // Apply discount if coupon provided
     let discount = { amount: 0 };
@@ -63,13 +74,17 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    const totalAmount = subtotal + shippingCost + tax - discount.amount;
+    const totalAmount = frontendTotal || (finalSubtotal + shippingCost + tax - discount.amount);
 
-    // Create order
+    // Create order with generated order number
+    const orderCount = await Order.countDocuments();
+    const orderNumber = `CUB${String(orderCount + 1).padStart(6, '0')}`;
+    
     const order = new Order({
+      orderNumber,
       user: userId,
       items: validatedItems,
-      subtotal,
+      subtotal: finalSubtotal,
       shippingCost,
       tax,
       discount,
@@ -80,6 +95,7 @@ export const createOrder = async (req, res) => {
     });
 
     await order.save();
+    console.log('Order created successfully:', order.orderNumber);
 
     // If payment method is not COD, initiate payment
     if (paymentMethod !== 'cod') {

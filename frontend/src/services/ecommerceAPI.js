@@ -65,3 +65,11 @@ export const orderAPI = {
 export const reviewAPI = {
   addReview: (productId, reviewData) => userAPI.post(`/products/${productId}/reviews`, reviewData)
 };
+
+// Software License APIs
+export const softwareAPI = {
+  purchaseSoftware: (purchaseData) => userAPI.post('/users/software/purchase', purchaseData),
+  getUserSoftwareLicenses: () => userAPI.get('/devices/licenses/user'),
+  activateLicense: (activationData) => userAPI.post('/devices/licenses/activate', activationData),
+  createSoftwareLicenses: (licenseData) => userAPI.post('/devices/licenses/create', licenseData)
+};

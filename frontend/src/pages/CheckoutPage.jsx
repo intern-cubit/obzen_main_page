@@ -14,51 +14,115 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { cartAPI, orderAPI, addressAPI } from '../services/ecommerceAPI';
+import { useCartWishlist } from '../contexts/CartWishlistContext';
+import { cartAPI, orderAPI, addressAPI, productAPI } from '../services/ecommerceAPI';
 import { formatPrice } from '../utils/priceUtils';
 import Navbar from '../components/LandingPage/Navbar';
 import FooterApple from '../components/LandingPage/FooterApple';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { cart: contextCart, getCartTotal, getCartCount, clearCart: clearContextCart } = useCartWishlist();
   
   const [cartItems, setCartItems] = useState([]);
+  const [enrichedCart, setEnrichedCart] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState(1); // 1: Cart, 2: Address, 3: Payment, 4: Confirmation
+  const [step, setStep] = useState(1); // 1: Cart, 2: Payment, 3: Confirmation
   const [orderData, setOrderData] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
+    // Don't redirect while auth is still loading
+    if (authLoading) {
+      return;
+    }
+    
     if (!isAuthenticated) {
       navigate('/shop');
       return;
     }
     fetchCartAndAddresses();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   const fetchCartAndAddresses = async () => {
     try {
       setLoading(true);
-      const [cartResponse, addressResponse] = await Promise.all([
-        cartAPI.getCart(),
-        user.addresses ? Promise.resolve({ success: true, data: user.addresses }) : addressAPI.getAddresses()
-      ]);
-
-      if (cartResponse.success) {
-        setCartItems(cartResponse.data.data.cart);
+      
+      // Use context cart and enrich with product details
+      if (contextCart.length === 0) {
+        setEnrichedCart([]);
+        setCartItems([]);
+        setLoading(false);
+        return;
       }
 
-      if (addressResponse.success) {
-        setAddresses(user.addresses || []);
-        if (user.addresses && user.addresses.length > 0) {
-          const defaultAddress = user.addresses.find(addr => addr.isDefault) || user.addresses[0];
-          setSelectedAddress(defaultAddress);
-        }
+      // Enrich cart items with product details
+      const enrichedItems = await Promise.all(
+        contextCart.map(async (item) => {
+          // If item already has all required fields, use it as is
+          if (item.title && item.price && (item.backgroundImage || item.image)) {
+            return {
+              _id: item.productId || item._id,
+              product: {
+                _id: item.productId || item._id,
+                title: item.title,
+                subtitle: item.subtitle || 'Product Description',
+                backgroundImage: item.backgroundImage || item.image
+              },
+              quantity: item.quantity || 1,
+              price: item.price,
+              variant: item.variant
+            };
+          }
+          
+          // Otherwise, fetch product details
+          try {
+            const response = await productAPI.getProduct(item.productId);
+            const product = response.data.data.product;
+            return {
+              _id: item.productId,
+              product: {
+                _id: product._id,
+                title: product.title,
+                subtitle: product.subtitle,
+                backgroundImage: product.backgroundImage
+              },
+              quantity: item.quantity || 1,
+              price: product.price,
+              variant: item.variant
+            };
+          } catch (error) {
+            console.error(`Failed to fetch product ${item.productId}:`, error);
+            return {
+              _id: item.productId || item._id,
+              product: {
+                _id: item.productId || item._id,
+                title: item.title || 'Product Name',
+                subtitle: item.subtitle || 'Product Description',
+                backgroundImage: item.backgroundImage || item.image || ''
+              },
+              quantity: item.quantity || 1,
+              price: item.price || 0,
+              variant: item.variant
+            };
+          }
+        })
+      );
+
+      setEnrichedCart(enrichedItems);
+      setCartItems(enrichedItems);
+
+      // Handle addresses
+      if (user?.addresses && user.addresses.length > 0) {
+        setAddresses(user.addresses);
+        const defaultAddress = user.addresses.find(addr => addr.isDefault) || user.addresses[0];
+        setSelectedAddress(defaultAddress);
       }
+
     } catch (error) {
       console.error('Failed to fetch cart and addresses:', error);
     } finally {
@@ -68,15 +132,26 @@ const CheckoutPage = () => {
 
   const updateCartQuantity = async (itemId, newQuantity) => {
     try {
-      await cartAPI.updateCartItem(itemId, { quantity: newQuantity });
-      fetchCartAndAddresses();
+      // Update the enriched cart items
+      const updatedItems = enrichedCart.map(item => {
+        if (item._id === itemId || item.product._id === itemId) {
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+      
+      setEnrichedCart(updatedItems);
+      setCartItems(updatedItems);
+      
+      // Also update context cart if needed
+      // Note: This is a simplified approach. In a real app, you'd want to sync properly
     } catch (error) {
       console.error('Failed to update cart:', error);
     }
   };
 
   const calculateTotal = () => {
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = enrichedCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const shipping = subtotal > 200 ? 0 : 20; // Free shipping over $200
     const tax = subtotal * 0.08; // 8% tax
     return {
@@ -92,31 +167,58 @@ const CheckoutPage = () => {
       setProcessing(true);
       
       const totals = calculateTotal();
+      
+      // Create a default shipping address if user doesn't have one
+      const defaultShippingAddress = selectedAddress || {
+        fullName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Customer',
+        mobile: user?.mobile || '0000000000',
+        pincode: '000000',
+        locality: 'Not provided',
+        address: 'Default address',
+        city: 'Not specified',
+        state: 'Not specified',
+        isDefault: true
+      };
+
       const order = {
-        items: cartItems.map(item => ({
+        items: enrichedCart.map(item => ({
           product: item.product._id,
           quantity: item.quantity,
           price: item.price,
           variant: item.variant
         })),
-        shippingAddress: selectedAddress,
+        shippingAddress: defaultShippingAddress,
         paymentMethod,
         subtotal: totals.subtotal,
-        shipping: totals.shipping,
+        shippingCost: totals.shipping,
         tax: totals.tax,
-        total: totals.total
+        totalAmount: totals.total
       };
 
       const response = await orderAPI.createOrder(order);
       
-      if (response.success) {
+      console.log('Order API Response:', response);
+      console.log('Response data:', response.data);
+      
+      if (response.data && response.data.success) {
         setOrderData(response.data);
-        setStep(4);
-        // Clear cart after successful order
-        await cartAPI.clearCart();
+        setStep(3); // Go to confirmation step
+        // Clear both context cart and API cart after successful order
+        clearContextCart();
+        try {
+          await cartAPI.clearCart();
+        } catch (error) {
+          console.log('API cart clear failed, but context cart cleared');
+        }
+      } else {
+        console.error('Order creation failed:', response);
+        throw new Error(response.data?.message || 'Failed to create order');
       }
     } catch (error) {
       console.error('Failed to place order:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to place order. Please try again.';
+      alert(errorMessage);
     } finally {
       setProcessing(false);
     }
@@ -150,7 +252,7 @@ const CheckoutPage = () => {
     );
   }
 
-  if (cartItems.length === 0 && step === 1) {
+  if (enrichedCart.length === 0 && step === 1 && !loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -174,185 +276,401 @@ const CheckoutPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      {/* Progress Bar */}
-      <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            {[
-              { number: 1, label: 'Cart', icon: ShoppingCart },
-              { number: 2, label: 'Address', icon: MapPin },
-              { number: 3, label: 'Payment', icon: CreditCard },
-              { number: 4, label: 'Confirmation', icon: Check }
-            ].map(({ number, label, icon: Icon }) => (
-              <div key={number} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  step >= number ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {step > number ? <Check size={20} /> : <Icon size={20} />}
-                </div>
-                <span className={`ml-2 font-medium ${
-                  step >= number ? 'text-blue-600' : 'text-gray-600'
-                }`}>
-                  {label}
-                </span>
-                {number < 4 && (
-                  <div className={`w-16 h-1 mx-4 ${
-                    step > number ? 'bg-blue-600' : 'bg-gray-200'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Step 1: Cart Review */}
-        {step === 1 && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
+            <ArrowLeft size={20} className="mr-2" />
+            Back
+          </button>
+          <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
+        </div>
+
+        {/* Step 1: Bill/Invoice Style Checkout */}
+        {step === 1 && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Invoice Section */}
             <div className="lg:col-span-2">
-              <h2 className="text-2xl font-bold mb-6">Review Your Cart</h2>
-              <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div key={item._id} className="bg-white p-6 rounded-lg shadow">
-                    <div className="flex items-center space-x-4">
-                      <img
-                        src={item.product.backgroundImage}
-                        alt={item.product.title}
-                        className="w-20 h-20 object-cover rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg">{item.product.title}</h3>
-                        <p className="text-gray-600">{item.product.subtitle}</p>
-                        {item.variant && (
-                          <p className="text-sm text-blue-600">Variant: {item.variant.name}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => updateCartQuantity(item._id, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
-                          className="p-1 border rounded disabled:opacity-50"
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <span className="font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => updateCartQuantity(item._id, item.quantity + 1)}
-                          className="p-1 border rounded"
-                        >
-                          <Plus size={16} />
-                        </button>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-bold text-lg">{formatPrice(item.price * item.quantity)}</div>
-                        <div className="text-sm text-gray-600">{formatPrice(item.price)} each</div>
+              <div className="bg-white rounded-lg shadow-lg p-8">
+                {/* Invoice Header */}
+                <div className="border-b pb-6 mb-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Invoice</h2>
+                      <p className="text-gray-600 mt-1">Bill To: {user?.firstName} {user?.lastName}</p>
+                      <p className="text-sm text-gray-500">{user?.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">Invoice #</p>
+                      <p className="font-mono text-lg font-semibold">INV-{Date.now()}</p>
+                      <p className="text-sm text-gray-500 mt-2">{new Date().toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full mb-6">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 font-semibold text-gray-900">Item</th>
+                        <th className="text-center py-3 font-semibold text-gray-900">Qty</th>
+                        <th className="text-right py-3 font-semibold text-gray-900">Unit Price</th>
+                        <th className="text-right py-3 font-semibold text-gray-900">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {enrichedCart.map((item, index) => (
+                        <tr key={item._id} className={index !== enrichedCart.length - 1 ? 'border-b' : ''}>
+                          <td className="py-4">
+                            <div className="flex items-center space-x-4">
+                              <img
+                                src={item.product.backgroundImage}
+                                alt={item.product.title}
+                                className="w-16 h-16 object-cover rounded-lg"
+                              />
+                              <div>
+                                <p className="font-semibold text-gray-900">{item.product.title}</p>
+                                <p className="text-sm text-gray-600">{item.product.subtitle}</p>
+                                {item.variant && (
+                                  <p className="text-xs text-blue-600">Variant: {item.variant.name}</p>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              <button
+                                onClick={() => updateCartQuantity(item._id, item.quantity - 1)}
+                                disabled={item.quantity <= 1}
+                                className="p-1 border rounded disabled:opacity-50 hover:bg-gray-100"
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="font-medium w-8 text-center">{item.quantity}</span>
+                              <button
+                                onClick={() => updateCartQuantity(item._id, item.quantity + 1)}
+                                className="p-1 border rounded hover:bg-gray-100"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="py-4 text-right font-medium">
+                            {formatPrice(item.price)}
+                          </td>
+                          <td className="py-4 text-right font-semibold">
+                            {formatPrice(item.price * item.quantity)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Invoice Totals */}
+                <div className="border-t pt-6">
+                  <div className="flex justify-end">
+                    <div className="w-80">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Subtotal:</span>
+                          <span className="font-medium">{formatPrice(totals.subtotal)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Shipping:</span>
+                          <span className="font-medium">
+                            {totals.shipping === 0 ? (
+                              <span className="text-green-600">Free</span>
+                            ) : (
+                              formatPrice(totals.shipping)
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Tax (8%):</span>
+                          <span className="font-medium">{formatPrice(totals.tax)}</span>
+                        </div>
+                        <div className="border-t pt-2">
+                          <div className="flex justify-between text-xl font-bold">
+                            <span>Total:</span>
+                            <span className="text-blue-600">{formatPrice(totals.total)}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
             </div>
             
-            {/* Order Summary */}
-            <div className="bg-white p-6 rounded-lg shadow h-fit">
-              <h3 className="text-xl font-bold mb-4">Order Summary</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(totals.subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span>{totals.shipping === 0 ? 'Free' : formatPrice(totals.shipping)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span>{formatPrice(totals.tax)}</span>
-                </div>
-                <div className="border-t pt-3">
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>{formatPrice(totals.total)}</span>
+            {/* Payment Summary Card */}
+            <div className="bg-white p-6 rounded-lg shadow-lg h-fit">
+              <h3 className="text-xl font-bold mb-6 flex items-center">
+                <Lock className="mr-2 text-green-600" size={20} />
+                Secure Checkout
+              </h3>
+              
+              {/* Order Summary */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-3">Order Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Items ({enrichedCart.length}):</span>
+                    <span className="font-medium">{formatPrice(totals.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Shipping:</span>
+                    <span className="font-medium">
+                      {totals.shipping === 0 ? 'Free' : formatPrice(totals.shipping)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax:</span>
+                    <span className="font-medium">{formatPrice(totals.tax)}</span>
+                  </div>
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total:</span>
+                      <span className="text-blue-600">{formatPrice(totals.total)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Payment Method Selection */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-3">Payment Method</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={paymentMethod === 'card'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mr-3"
+                    />
+                    <CreditCard size={16} className="mr-2" />
+                    <span>Credit/Debit Card</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={paymentMethod === 'cod'}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="mr-3"
+                    />
+                    <Truck size={16} className="mr-2" />
+                    <span>Cash on Delivery</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Proceed to Payment Button */}
               <button
                 onClick={() => setStep(2)}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg mt-6 hover:bg-blue-700"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center justify-center"
               >
-                Continue to Address
+                <Lock size={20} className="mr-2" />
+                Proceed to Payment
               </button>
+              
+              <p className="text-xs text-gray-500 text-center mt-3">
+                Your payment information is encrypted and secure
+              </p>
             </div>
-          </motion.div>
+          </div>
         )}
 
-        {/* Step 4: Order Confirmation */}
-        {step === 4 && orderData && (
+        {/* Step 3: Order Confirmation */}
+        {step === 3 && orderData && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-16"
+            className="max-w-2xl mx-auto text-center"
           >
-            <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Check size={40} className="text-green-600" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Order Placed Successfully!</h2>
-            <p className="text-gray-600 mb-2">Thank you for your purchase</p>
-            <p className="text-sm text-gray-500 mb-8">
-              Order #{orderData.orderNumber} | Total: {formatPrice(totals.total)}
-            </p>
-            <div className="space-y-4">
-              <button
-                onClick={() => navigate('/orders')}
-                className="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 mr-4"
-              >
-                View Order Details
-              </button>
-              <button
-                onClick={() => navigate('/shop')}
-                className="border border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50"
-              >
-                Continue Shopping
-              </button>
+            <div className="bg-white p-8 rounded-lg shadow-lg">
+              <div className="mb-8">
+                <div className="bg-green-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Check size={48} className="text-green-600" />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Order Placed Successfully!</h2>
+                <p className="text-gray-600 text-lg mb-2">Thank you for your purchase!</p>
+                <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                  <p className="text-lg font-semibold text-gray-900">
+                    Order #{orderData.order?.orderNumber || orderData.orderNumber}
+                  </p>
+                  <p className="text-2xl font-bold text-green-600 mt-2">
+                    Total: {formatPrice(totals.total)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Order Details Summary */}
+              <div className="text-left border rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-gray-900 mb-3">Order Details</h3>
+                <div className="space-y-2 text-sm">
+                  {enrichedCart.map((item) => (
+                    <div key={item._id} className="flex justify-between">
+                      <span className="text-gray-600">
+                        {item.product.title} × {item.quantity}
+                      </span>
+                      <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t mt-3 pt-3">
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>Payment Method:</span>
+                    <span className="font-medium capitalize">{paymentMethod === 'cod' ? 'Cash on Delivery' : 'Card Payment'}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-600 mt-1">
+                    <span>Status:</span>
+                    <span className="font-medium text-green-600">Confirmed</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-4">
+                <button
+                  onClick={() => navigate('/orders')}
+                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  View My Orders
+                </button>
+                <button
+                  onClick={() => navigate('/shop')}
+                  className="w-full border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Continue Shopping
+                </button>
+              </div>
+
+              {/* Additional Info */}
+              <div className="mt-6 text-sm text-gray-500">
+                <p>You will receive an email confirmation shortly.</p>
+                {paymentMethod === 'cod' && (
+                  <p className="mt-1">Please keep the exact amount ready for delivery.</p>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
 
-        {/* Steps 2 & 3: Simplified for demo */}
-        {(step === 2 || step === 3) && (
+        {/* Steps 2: Payment Processing */}
+        {step === 2 && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="text-center py-16"
+            className="max-w-2xl mx-auto"
           >
-            <div className="bg-white p-8 rounded-lg shadow max-w-md mx-auto">
-              <h2 className="text-2xl font-bold mb-4">
-                {step === 2 ? 'Select Address' : 'Choose Payment Method'}
-              </h2>
-              <p className="text-gray-600 mb-6">
-                {step === 2 
-                  ? 'Using default address for demo' 
-                  : 'Mock payment processing for demo'}
-              </p>
+            <div className="bg-white p-8 rounded-lg shadow-lg">
+              <div className="text-center mb-8">
+                <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CreditCard size={40} className="text-blue-600" />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Complete Payment</h2>
+                <p className="text-gray-600">
+                  You're about to pay <span className="font-bold text-blue-600">{formatPrice(totals.total)}</span>
+                </p>
+              </div>
+
+              {/* Payment Method Display */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <div className="flex items-center justify-center">
+                  {paymentMethod === 'card' ? (
+                    <div className="flex items-center text-gray-700">
+                      <CreditCard size={24} className="mr-3" />
+                      <span className="font-medium">Credit/Debit Card Payment</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-gray-700">
+                      <Truck size={24} className="mr-3" />
+                      <span className="font-medium">Cash on Delivery</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Order Summary */}
+              <div className="border rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-gray-900 mb-3">Order Summary</h3>
+                <div className="space-y-2 text-sm">
+                  {enrichedCart.map((item, index) => (
+                    <div key={item._id} className="flex justify-between">
+                      <span className="text-gray-600">
+                        {item.product.title} × {item.quantity}
+                      </span>
+                      <span className="font-medium">{formatPrice(item.price * item.quantity)}</span>
+                    </div>
+                  ))}
+                  <div className="border-t pt-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="font-medium">{formatPrice(totals.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Shipping:</span>
+                      <span className="font-medium">
+                        {totals.shipping === 0 ? 'Free' : formatPrice(totals.shipping)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Tax:</span>
+                      <span className="font-medium">{formatPrice(totals.tax)}</span>
+                    </div>
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total:</span>
+                        <span className="text-blue-600">{formatPrice(totals.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
               <div className="space-y-4">
                 <button
-                  onClick={() => step === 2 ? setStep(3) : handlePlaceOrder()}
+                  onClick={handlePlaceOrder}
                   disabled={processing}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-6 rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {processing ? 'Processing...' : step === 2 ? 'Continue to Payment' : 'Place Order'}
+                  {processing ? (
+                    <>
+                      <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={20} className="mr-2" />
+                      {paymentMethod === 'cod' ? 'Place Order' : 'Complete Payment'}
+                    </>
+                  )}
                 </button>
+                
                 <button
-                  onClick={() => setStep(step - 1)}
-                  className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
+                  onClick={() => setStep(1)}
+                  disabled={processing}
+                  className="w-full border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
-                  Back
+                  Back to Cart
                 </button>
+              </div>
+
+              {/* Security Notice */}
+              <div className="text-center mt-6">
+                <div className="flex items-center justify-center text-sm text-gray-500">
+                  <Lock size={16} className="mr-2" />
+                  <span>Your payment information is encrypted and secure</span>
+                </div>
               </div>
             </div>
           </motion.div>

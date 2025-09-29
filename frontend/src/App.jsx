@@ -19,6 +19,8 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
 import WishlistPage from './pages/WishlistPage';
 import CheckoutPage from './pages/CheckoutPage';
+import MySoftwarePage from './pages/MySoftwarePage';
+import MyOrdersPage from './pages/MyOrdersPage';
 import WaBombProductPage from './pages/product_pages/WaBombProductPage';
 import MailStormProductPage from './pages/product_pages/MailStormProductPage';
 import CubiViewProductPage from './pages/product_pages/CubiViewProductPage';
@@ -73,6 +75,8 @@ const App = () => {
                         <Route path="/cart" element={<CartPage />} />
                         <Route path="/wishlist" element={<WishlistPage />} />
                         <Route path="/checkout" element={<CheckoutPage />} />
+                        <Route path="/my-software" element={<MySoftwarePage />} />
+                        <Route path="/orders" element={<MyOrdersPage />} />
                         
                         {/* Static product pages */}
                         <Route path="/products/wa-bomb" element={<WaBombProductPage />} />

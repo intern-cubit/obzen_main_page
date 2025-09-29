@@ -22,6 +22,8 @@ import uploadRoutes from './routes/upload.js';
 import userRoutes from './routes/users.js';
 import productsRoutes from './routes/products.js';
 import orderRoutes from './routes/orders.js';
+import deviceRoutes from './routes/devices.js';
+import sadminRoutes from './routes/sadmin.js';
 
 dotenv.config();
 
@@ -68,6 +70,8 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/sadmin', sadminRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -98,7 +102,9 @@ app.use('*', (req, res) => {
       'GET /api/products/categories', 
       'GET /api/products/featured',
       'GET /api/products/search',
-      'GET /api/products/:id'
+      'GET /api/products/:id',
+      'POST /api/sadmin/check-activation',
+      'POST /api/sadmin/activate'
     ]
   });
 });
