@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://www.obzentechnolabs.com/api';
+// Use relative URL for same-origin requests, or fallback to environment variable
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
+  (window.location.hostname.includes('obzentechnolabs.com') 
+    ? `${window.location.protocol}//${window.location.hostname}/api`
+    : 'http://localhost:5000/api');
 
 // Create axios instance
 const api = axios.create({
@@ -8,6 +12,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 // Add request interceptor to include token
@@ -42,6 +47,7 @@ const userAPI = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 // Add request interceptor to include user token
