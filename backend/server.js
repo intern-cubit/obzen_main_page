@@ -62,24 +62,44 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
+// Routes - support both /api prefix and without (for reverse proxy setups)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/api/hero', heroRoutes);
+app.use('/hero', heroRoutes);
 app.use('/api/about', aboutRoutes);
+app.use('/about', aboutRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/services', serviceRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/reviews', reviewRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/contact', contactRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/upload', uploadRoutes);
 
 // E-commerce routes
 app.use('/api/users', userRoutes);
+app.use('/users', userRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/products', productsRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/orders', orderRoutes);
 app.use('/api/devices', deviceRoutes);
+app.use('/devices', deviceRoutes);
 app.use('/api/sadmin', sadminRoutes);
+app.use('/sadmin', sadminRoutes);
 
-// Health check route
+// Health check routes
 app.get('/api/health', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
   res.json({ 
     success: true, 
     message: 'Server is healthy',
@@ -102,14 +122,16 @@ app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
     message: `Route not found: ${req.method} ${req.originalUrl}`,
+    note: 'Server supports both /api/* and /* routes for reverse proxy compatibility',
     availableRoutes: [
-      'GET /api/products',
-      'GET /api/products/categories', 
-      'GET /api/products/featured',
-      'GET /api/products/search',
-      'GET /api/products/:id',
-      'POST /api/sadmin/check-activation',
-      'POST /api/sadmin/activate'
+      'GET /products or /api/products',
+      'GET /hero or /api/hero',
+      'GET /about or /api/about',
+      'GET /services or /api/services',
+      'GET /reviews or /api/reviews',
+      'GET /contact or /api/contact',
+      'POST /auth/login or /api/auth/login',
+      'GET /health or /api/health'
     ]
   });
 });
