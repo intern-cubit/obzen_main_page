@@ -4,8 +4,8 @@ import { heroService } from '../../services/contentService'
 import { ArrowRight } from 'lucide-react'
 
 const Hero = () => {
-    const [mediaUrl, setMediaUrl] = useState('./TraceLink.mp4')
-    const [mediaType, setMediaType] = useState('video')
+    const [mediaUrl, setMediaUrl] = useState('./hero.jpg')
+    const [mediaType, setMediaType] = useState('image')
 
     useEffect(() => {
         fetchHeroData()
