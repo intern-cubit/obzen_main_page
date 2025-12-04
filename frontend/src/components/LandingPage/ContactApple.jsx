@@ -34,7 +34,7 @@ const ContactApple = () => {
         description: 'Our team is available 24/7 to discuss your project needs. We typically respond within 2 hours during business days.',
         email: 'connect@obzentechnolabs.com',
         phone: '+91 86185 09818, +91 95915 31802',
-        address: 'Innovation Hub\nTech District, San Francisco',
+        address: 'Bangalore, karnataka, India',
         workingHours: 'Monday - Friday: 9:00 AM - 6:00 PM'
       });
     } finally {
@@ -151,8 +151,7 @@ const ContactApple = () => {
                       ))
                     ) : (
                       <>
-                        Innovation Hub<br />
-                        Tech District, San Francisco
+                        Bangalore, karnataka, India
                       </>
                     )}
                   </div>

@@ -76,8 +76,7 @@ const FooterApple = () => {
                 <div className="flex items-start text-gray-500">
                   <MapPin className="w-3 h-3 mr-2 mt-0.5 flex-shrink-0" />
                   <span className="text-xs font-light">
-                    Innovation Hub<br />
-                    Tech District, San Francisco
+                    Bangalore, karnataka, India
                   </span>
                 </div>
               </div>

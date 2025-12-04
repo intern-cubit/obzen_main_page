@@ -36,7 +36,7 @@ connectDB();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'https://www.obzentechnolabs.com',
   credentials: true
 }));
 
@@ -74,7 +74,7 @@ app.use('/api/devices', deviceRoutes);
 app.use('/api/sadmin', sadminRoutes);
 
 // Health check route
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ 
     success: true, 
     message: 'Server is healthy',

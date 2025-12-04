@@ -28,7 +28,7 @@ const contactSchema = new mongoose.Schema({
   address: {
     type: String,
     required: true,
-    default: 'Innovation Hub\nTech District, San Francisco'
+    default: 'Bangalore, karnataka, India'
   },
   workingHours: {
     type: String,

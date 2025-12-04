@@ -156,7 +156,7 @@ const ContactAdmin = () => {
                     <div>
                       <div className="text-base font-normal text-gray-900 mb-0.5">Office</div>
                       <div className="text-sm text-gray-500 font-light">
-                        {formData.address || 'Innovation Hub, Tech District, San Francisco'}
+                        {formData.address || 'Bangalore, karnataka, India'}
                       </div>
                     </div>
                   </div>
