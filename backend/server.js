@@ -36,7 +36,12 @@ connectDB();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://www.obzentechnolabs.com',
+  origin: [
+    'https://obzentechnolabs.com',
+    'https://www.obzentechnolabs.com',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ],
   credentials: true
 }));
 
