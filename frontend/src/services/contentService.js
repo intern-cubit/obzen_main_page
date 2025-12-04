@@ -22,7 +22,7 @@ export const authService = {
 
 export const heroService = {
   getHero: async () => {
-    const response = await api.get('/hero');
+    const response = await api.get('/hero/');
     return response.data;
   },
 
@@ -76,7 +76,7 @@ export const aboutService = {
 
 export const productService = {
   getProducts: async () => {
-    const response = await api.get('/products');
+    const response = await api.get('/products/');
     return response.data;
   },
 
@@ -108,7 +108,7 @@ export const productService = {
 
 export const serviceService = {
   getServices: async () => {
-    const response = await api.get('/services');
+    const response = await api.get('/services/');
     return response.data;
   },
 
@@ -140,7 +140,7 @@ export const serviceService = {
 
 export const reviewService = {
   getReviews: async () => {
-    const response = await api.get('/reviews');
+    const response = await api.get('/reviews/');
     return response.data;
   },
 
@@ -172,7 +172,7 @@ export const reviewService = {
 
 export const contactService = {
   getContact: async () => {
-    const response = await api.get('/contact');
+    const response = await api.get('/contact/');
     return response.data;
   },
 
