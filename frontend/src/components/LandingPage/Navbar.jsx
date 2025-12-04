@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, User, ChevronDown, LogOut, Settings, Package } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import logo from '../../assets/images/logo.png';
 
 // NOTE: Make sure the import paths for your modal components are correct.
 import LoginModal from '../auth/LoginModal';
@@ -71,7 +72,16 @@ const Navbar = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16 lg:h-20">
                         {/* Logo */}
-                        <span className="font-thin text-white text-3xl font-sans">CuBIT Dynamics</span>
+                        <button 
+                            onClick={() => handleNavClick('/', true)}
+                            className="flex items-center hover:opacity-80 transition-opacity duration-300"
+                        >
+                            <img 
+                                src={logo} 
+                                alt="Obzen Technolabs" 
+                                className="h-12 w-auto lg:h-16 xl:h-20 object-contain"
+                            />
+                        </button>
 
                         {/* Desktop Navigation */}
                         <div className="hidden lg:block">

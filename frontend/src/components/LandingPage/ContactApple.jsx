@@ -32,8 +32,8 @@ const ContactApple = () => {
         title: 'Get in touch.',
         subtitle: 'Ready to build something extraordinary?',
         description: 'Our team is available 24/7 to discuss your project needs. We typically respond within 2 hours during business days.',
-        email: 'hello@cubitdynamics.com',
-        phone: '+1 (555) 123-4567',
+        email: 'connect@obzentechnolabs.com',
+        phone: '+91 86185 09818, +91 95915 31802',
         address: 'Innovation Hub\nTech District, San Francisco',
         workingHours: 'Monday - Friday: 9:00 AM - 6:00 PM'
       });

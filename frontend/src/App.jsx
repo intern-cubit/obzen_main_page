@@ -14,6 +14,7 @@ if (import.meta.env.DEV) {
 
 // Public pages
 import LandingPage from './pages/LandingPage';
+import AboutPage from './pages/AboutPage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
@@ -69,6 +70,7 @@ const App = () => {
                     <Routes>
                         {/* Public Routes */}
                         <Route path="/" element={<LandingPage />} />
+                        <Route path="/about" element={<AboutPage />} />
                         <Route path="/shop" element={<ProductsPage />} />
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/product/:id" element={<ProductDetailPage />} />

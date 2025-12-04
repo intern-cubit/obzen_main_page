@@ -40,16 +40,16 @@ const ContactAdmin = () => {
         const defaultData = {
           title: 'Get in Touch',
           subtitle: 'Ready to innovate?',
-          description: 'Let\'s discuss how CuBIT Dynamics can transform your business with cutting-edge technology solutions.',
-          email: 'info@cubitdynamics.com',
+          description: 'Let\'s discuss how Obzen Technolabs can transform your business with cutting-edge technology solutions.',
+          email: 'info@obzentechnolabs.com',
           phone: '+1 (555) 123-4567',
           address: '123 Innovation Drive, Tech Valley, CA 94000',
           workingHours: 'Monday - Friday: 9:00 AM - 6:00 PM',
           socialMedia: {
-            linkedin: 'https://linkedin.com/company/cubit-dynamics',
-            twitter: 'https://twitter.com/cubitdynamics',
-            instagram: 'https://instagram.com/cubitdynamics',
-            facebook: 'https://facebook.com/cubitdynamics'
+            linkedin: 'https://linkedin.com/company/obzen-technolabs',
+            twitter: 'https://twitter.com/obzentechnolabs',
+            instagram: 'https://instagram.com/obzentechnolabs',
+            facebook: 'https://facebook.com/obzentechnolabs'
           }
         };
         setFormData(defaultData);

@@ -14,7 +14,10 @@ router.get('/', async (req, res) => {
     
     // If no hero data exists, create default
     if (!hero) {
-      hero = new Hero({});
+      hero = new Hero({
+        mediaUrl: './TraceLink.mp4',
+        mediaType: 'video'
+      });
       await hero.save();
     }
 
@@ -40,6 +43,8 @@ router.put('/', [
   authMiddleware,
   body('title').optional().isLength({ min: 1 }).withMessage('Title cannot be empty'),
   body('subtitle').optional().isLength({ min: 1 }).withMessage('Subtitle cannot be empty'),
+  body('mediaUrl').optional().isLength({ min: 1 }).withMessage('Media URL cannot be empty'),
+  body('mediaType').optional().isIn(['video', 'image']).withMessage('Media type must be either video or image'),
   body('videoUrl').optional().isLength({ min: 1 }).withMessage('Video URL cannot be empty')
 ], async (req, res) => {
   try {
@@ -90,6 +95,8 @@ router.post('/', [
   authMiddleware,
   body('title').optional().isLength({ min: 1 }).withMessage('Title cannot be empty'),
   body('subtitle').optional().isLength({ min: 1 }).withMessage('Subtitle cannot be empty'),
+  body('mediaUrl').optional().isLength({ min: 1 }).withMessage('Media URL cannot be empty'),
+  body('mediaType').optional().isIn(['video', 'image']).withMessage('Media type must be either video or image'),
   body('videoUrl').optional().isLength({ min: 1 }).withMessage('Video URL cannot be empty')
 ], async (req, res) => {
   try {

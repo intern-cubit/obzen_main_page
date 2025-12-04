@@ -1,23 +1,52 @@
 import mongoose from 'mongoose';
 
+const contentSectionSchema = new mongoose.Schema({
+  sectionId: {
+    type: String,
+    required: true
+  },
+  heading: {
+    type: String,
+    required: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  order: {
+    type: Number,
+    default: 0
+  }
+}, { _id: false });
+
 const aboutSchema = new mongoose.Schema({
   mainHeading: {
     type: String,
-    default: 'Designed by engineers.'
+    default: 'Who We Are'
   },
   subHeading: {
     type: String,
-    default: 'At CuBIT Dynamics, we create technology that works beautifully.'
+    default: 'Obzen Technolabs is a deep-tech company focused on revolutionizing the future of tracking and safety.'
   },
-  description1: {
+  introDescription: {
     type: String,
-    default: 'Our name reflects our expertise — Cu (Copper) represents the foundation of electronics, BIT signifies the digital realm, and Dynamics embodies our innovative spirit. We specialize in creating seamless integration between hardware and software, delivering solutions that are both powerful and elegant.'
+    default: 'We are building intelligent, globally scalable solutions that protect people, pets and assets through a powerful blend of advanced hardware design and smart software architectures.'
   },
-  description2: {
+  contentSections: [contentSectionSchema],
+  closingStatement: {
     type: String,
-    default: 'We blend electronics, software, and AI-driven solutions to transform complex challenges into elegant innovations. From IoT devices to smart automation systems, we\'re shaping the future of technology.'
+    default: 'We\'re driven by the belief that safety should be universal, effortless and always within reach.'
   },
   imageUrl: {
+    type: String,
+    default: ''
+  },
+  // Keep legacy fields for backward compatibility
+  description1: {
+    type: String,
+    default: ''
+  },
+  description2: {
     type: String,
     default: ''
   }

@@ -111,7 +111,7 @@ const Footer = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl font-thin mb-6">CuBIT Dynamics</h2>
+              <h2 className="text-3xl font-thin mb-6">Obzen Technolabs</h2>
               <p className="text-gray-300 mb-6 leading-relaxed">
                 Engineering the future through innovative electronics, software, and AI solutions. 
                 We create technology that seamlessly integrates hardware and software for tomorrow's challenges.
@@ -180,7 +180,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
             <div className="text-gray-400 text-sm">
-              © 2025 CuBIT Dynamics. All rights reserved.
+              © 2025 Obzen Technolabs. All rights reserved.
             </div>
             
             <div className="flex flex-wrap justify-center lg:justify-end gap-6">

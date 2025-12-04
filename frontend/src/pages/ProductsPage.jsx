@@ -346,7 +346,7 @@ const ProductsPage = () => {
                                 <ArrowLeft size={24} />
                             </button>
                             <Link to="/" className="text-2xl font-bold">
-                                <span className="font-thin text-white text-3xl font-sans">CuBIT Dynamics</span>
+                                <span className="font-thin text-white text-3xl font-sans">Obzen Technolabs</span>
                             </Link>
                         </div>
 

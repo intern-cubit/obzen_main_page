@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Video, Upload, Eye, X } from 'lucide-react';
+import { Save, Video, Upload, Eye, X, Image } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { heroService, uploadService } from '../../services/contentService';
 
 const HeroAdmin = () => {
   const [heroData, setHeroData] = useState({
-    videoUrl: './TraceLink.mp4'
+    mediaUrl: './TraceLink.mp4',
+    mediaType: 'video',
+    videoUrl: './TraceLink.mp4' // Keep for backward compatibility
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [previewVideo, setPreviewVideo] = useState('');
+  const [previewMedia, setPreviewMedia] = useState('');
+  const [selectedMediaType, setSelectedMediaType] = useState('video');
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
@@ -22,7 +25,8 @@ const HeroAdmin = () => {
       const response = await heroService.getHero();
       if (response.success) {
         setHeroData(response.data);
-        setPreviewVideo(response.data.videoUrl);
+        setPreviewMedia(response.data.mediaUrl || response.data.videoUrl);
+        setSelectedMediaType(response.data.mediaType || 'video');
       }
     } catch (error) {
       console.error('Error loading hero data:', error);
@@ -36,59 +40,72 @@ const HeroAdmin = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('video/')) {
+    // Validate file type based on selected media type
+    if (selectedMediaType === 'video' && !file.type.startsWith('video/')) {
       toast.error('Please select a valid video file');
       return;
     }
+    
+    if (selectedMediaType === 'image' && !file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
 
-    // Validate file size (100MB limit)
-    if (file.size > 100 * 1024 * 1024) {
-      toast.error('Video file size should be less than 100MB');
+    // Validate file size (100MB for videos, 10MB for images)
+    const maxSize = selectedMediaType === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`${selectedMediaType === 'video' ? 'Video' : 'Image'} file size should be less than ${selectedMediaType === 'video' ? '100MB' : '10MB'}`);
       return;
     }
 
     try {
       setIsUploading(true);
-      toast.loading('Uploading video...');
+      toast.loading(`Uploading ${selectedMediaType}...`);
 
-      const response = await uploadService.uploadFile(file, 'videos');
+      const uploadFolder = selectedMediaType === 'video' ? 'videos' : 'images';
+      const response = await uploadService.uploadFile(file, uploadFolder);
       console.log('Upload response:', response);
       
       if (response.success) {
-        const videoUrl = response.data.url;
-        const updatedData = { ...heroData, videoUrl };
+        const mediaUrl = response.data.url;
+        const updatedData = { 
+          ...heroData, 
+          mediaUrl,
+          mediaType: selectedMediaType,
+          // Keep videoUrl for backward compatibility
+          videoUrl: selectedMediaType === 'video' ? mediaUrl : heroData.videoUrl
+        };
         console.log('Saving hero data:', updatedData);
         setHeroData(updatedData);
-        setPreviewVideo(videoUrl);
+        setPreviewMedia(mediaUrl);
         
         // Automatically save the changes after successful upload
         try {
           const saveResponse = await heroService.createOrUpdateHero(updatedData);
           console.log('Save response:', saveResponse);
           if (saveResponse.success) {
-            toast.success('Video uploaded and saved successfully!');
+            toast.success(`${selectedMediaType === 'video' ? 'Video' : 'Image'} uploaded and saved successfully!`);
           } else {
-            toast.error('Video uploaded but failed to save');
+            toast.error(`${selectedMediaType === 'video' ? 'Video' : 'Image'} uploaded but failed to save`);
           }
         } catch (saveError) {
           console.error('Save error:', saveError);
-          toast.error('Video uploaded but failed to save');
+          toast.error(`${selectedMediaType === 'video' ? 'Video' : 'Image'} uploaded but failed to save`);
         }
       } else {
-        toast.error('Video upload failed');
+        toast.error(`${selectedMediaType === 'video' ? 'Video' : 'Image'} upload failed`);
       }
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload video');
+      toast.error(`Failed to upload ${selectedMediaType}`);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleSave = async () => {
-    if (!heroData.videoUrl) {
-      toast.error('Please upload a video first');
+    if (!heroData.mediaUrl && !heroData.videoUrl) {
+      toast.error('Please upload a media file first');
       return;
     }
 
@@ -110,7 +127,7 @@ const HeroAdmin = () => {
   };
 
   const openPreview = () => {
-    if (previewVideo) {
+    if (previewMedia) {
       setShowPreview(true);
     }
   };
@@ -134,25 +151,67 @@ const HeroAdmin = () => {
         
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="space-y-6">
-            {/* Video Upload Section */}
+            {/* Media Type Selection */}
             <div>
               <label className="block text-lg font-semibold text-gray-700 mb-4">
-                <Video className="inline mr-2" />
-                Background Video
+                Media Type
+              </label>
+              <div className="flex space-x-4 mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="mediaType"
+                    value="video"
+                    checked={selectedMediaType === 'video'}
+                    onChange={(e) => setSelectedMediaType(e.target.value)}
+                    className="mr-2"
+                  />
+                  <Video className="w-5 h-5 mr-1" />
+                  Video
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="mediaType"
+                    value="image"
+                    checked={selectedMediaType === 'image'}
+                    onChange={(e) => setSelectedMediaType(e.target.value)}
+                    className="mr-2"
+                  />
+                  <Image className="w-5 h-5 mr-1" />
+                  Image
+                </label>
+              </div>
+            </div>
+
+            {/* Media Upload Section */}
+            <div>
+              <label className="block text-lg font-semibold text-gray-700 mb-4">
+                {selectedMediaType === 'video' ? (
+                  <>
+                    <Video className="inline mr-2" />
+                    Background Video
+                  </>
+                ) : (
+                  <>
+                    <Image className="inline mr-2" />
+                    Background Image
+                  </>
+                )}
               </label>
               
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                 <div className="text-center">
                   <input
                     type="file"
-                    accept="video/*"
+                    accept={selectedMediaType === 'video' ? 'video/*' : 'image/*'}
                     onChange={handleFileUpload}
                     className="hidden"
-                    id="video-upload"
+                    id="media-upload"
                     disabled={isUploading}
                   />
                   <label
-                    htmlFor="video-upload"
+                    htmlFor="media-upload"
                     className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
                       isUploading 
                         ? 'bg-gray-400 cursor-not-allowed' 
@@ -160,19 +219,24 @@ const HeroAdmin = () => {
                     } focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500`}
                   >
                     <Upload className="mr-2 h-5 w-5" />
-                    {isUploading ? 'Uploading...' : 'Upload Video'}
+                    {isUploading ? 'Uploading...' : `Upload ${selectedMediaType === 'video' ? 'Video' : 'Image'}`}
                   </label>
                   <p className="mt-2 text-sm text-gray-500">
-                    MP4, WebM, or AVI up to 100MB
+                    {selectedMediaType === 'video' 
+                      ? 'MP4, WebM, or AVI up to 100MB'
+                      : 'JPG, PNG, GIF, or WebP up to 10MB'
+                    }
                   </p>
                 </div>
               </div>
 
-              {/* Current Video Display */}
-              {previewVideo && (
+              {/* Current Media Display */}
+              {previewMedia && (
                 <div className="mt-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">Current Video:</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Current {heroData.mediaType === 'video' ? 'Video' : 'Image'}:
+                    </span>
                     <button
                       onClick={openPreview}
                       className="inline-flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200"
@@ -183,18 +247,33 @@ const HeroAdmin = () => {
                   </div>
                   
                   <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
-                    <video
-                      src={previewVideo}
-                      className="w-full h-full object-cover"
-                      muted
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                      <Video className="w-12 h-12 text-white" />
-                    </div>
+                    {heroData.mediaType === 'video' ? (
+                      <>
+                        <video
+                          src={previewMedia}
+                          className="w-full h-full object-cover"
+                          muted
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                          <Video className="w-12 h-12 text-white" />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <img
+                          src={previewMedia}
+                          alt="Hero background"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                          <Image className="w-12 h-12 text-white" />
+                        </div>
+                      </>
+                    )}
                   </div>
                   
                   <p className="mt-2 text-sm text-gray-600 truncate">
-                    {heroData.videoUrl}
+                    {heroData.mediaUrl || heroData.videoUrl}
                   </p>
                 </div>
               )}
@@ -219,7 +298,7 @@ const HeroAdmin = () => {
         </div>
       </div>
 
-      {/* Video Preview Modal */}
+      {/* Media Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="relative max-w-4xl w-full mx-4">
@@ -229,12 +308,20 @@ const HeroAdmin = () => {
             >
               <X className="w-8 h-8" />
             </button>
-            <video
-              src={previewVideo}
-              controls
-              autoPlay
-              className="w-full rounded-lg"
-            />
+            {heroData.mediaType === 'video' ? (
+              <video
+                src={previewMedia}
+                controls
+                autoPlay
+                className="w-full rounded-lg"
+              />
+            ) : (
+              <img
+                src={previewMedia}
+                alt="Hero background preview"
+                className="w-full rounded-lg max-h-[80vh] object-contain"
+              />
+            )}
           </div>
         </div>
       )}
