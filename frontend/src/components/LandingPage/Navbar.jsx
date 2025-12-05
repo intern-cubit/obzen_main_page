@@ -100,77 +100,7 @@ const Navbar = () => {
                             </div>
                         </div>
 
-                        {/* Auth Buttons - Hidden for now
-                        <div className="hidden lg:flex items-center space-x-4">
-                            {isAuthenticated ? (
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setShowUserMenu(!showUserMenu)}
-                                        className="flex items-center gap-2 text-white hover:text-blue-600 transition-colors duration-300"
-                                    >
-                                        <User size={24} />
-                                        <span className="hidden sm:block font-medium">{user?.firstName}</span>
-                                        <ChevronDown size={16} />
-                                    </button>
-
-                                    {/* User Dropdown Menu */}
-                                    {showUserMenu && (
-                                        <div className="absolute right-0 mt-3 w-48 bg-black/80 backdrop-blur-lg border border-white/20 rounded-lg shadow-xl py-2 z-50">
-                                            <button
-                                                onClick={() => {
-                                                    navigate('/profile');
-                                                    setShowUserMenu(false);
-                                                }}
-                                                className="flex items-center w-full text-left px-4 py-2 text-white hover:bg-white/10 transition-colors duration-200"
-                                            >
-                                                <Settings size={16} className="mr-2" />
-                                                Profile
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    navigate('/orders');
-                                                    setShowUserMenu(false);
-                                                }}
-                                                className="flex items-center w-full text-left px-4 py-2 text-white hover:bg-white/10 transition-colors duration-200"
-                                            >
-                                                <Package size={16} className="mr-2" />
-                                                Orders
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    logout();
-                                                    setShowUserMenu(false);
-                                                }}
-                                                className="flex items-center w-full text-left px-4 py-2 text-white hover:bg-white/10 transition-colors duration-200"
-                                            >
-                                                <LogOut size={16} className="mr-2" />
-                                                Logout
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <>
-                                    <button 
-                                        onClick={() => setShowLoginModal(true)}
-                                        className={`font-medium transition-colors duration-300 ${
-                                            isScrolled 
-                                                ? 'text-white hover:text-blue-600' 
-                                                : 'text-white hover:text-white'
-                                        }`}
-                                    >
-                                        Sign In
-                                    </button>
-                                    <button 
-                                        onClick={() => setShowRegisterModal(true)}
-                                        className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors duration-300"
-                                    >
-                                        Sign Up
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                        */}
+                        {/* Auth Buttons - Hidden for now */}
 
                         {/* Mobile menu button */}
                         <div className="lg:hidden">

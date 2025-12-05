@@ -4,7 +4,7 @@ import axios from 'axios';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
   (window.location.hostname.includes('obzentechnolabs.com') 
     ? `${window.location.protocol}//${window.location.hostname}/api`
-    : 'http://localhost:5000/api');
+    : 'http://localhost:5000');
 
 // Create axios instance
 const api = axios.create({
