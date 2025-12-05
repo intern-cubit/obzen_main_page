@@ -117,7 +117,7 @@ const ProductsApple = () => {
                                         { title: 'Compact & Easy to Use', desc: 'Targeting a design that fits seamlessly into everyday life.', Icon: Sparkles },
                                         { title: 'Affordable', desc: 'Our goal is to make advanced tracking accessible to families and businesses across India.', Icon: DollarSign }
                                     ].map((feature, index) => (
-                                        <div key={index} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                        <div key={index} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col items-center text-center">
                                             <feature.Icon className="w-10 h-10 text-blue-600 mb-4" />
                                             <h4 className="text-lg font-medium text-gray-900 mb-3">
                                                 {feature.title}
