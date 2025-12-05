@@ -33,8 +33,6 @@ const Navbar = () => {
     const navItems = [
         { name: 'Home', href: '#home', isRoute: false },
         { name: 'About Us', href: '#about', isRoute: false },
-        { name: 'Products', href: '/products', isRoute: true },
-        { name: 'Our Services', href: '#services', isRoute: false },
         { name: 'Contact Us', href: '#contact', isRoute: false }
     ];
 
@@ -102,7 +100,7 @@ const Navbar = () => {
                             </div>
                         </div>
 
-                        {/* Auth Buttons */}
+                        {/* Auth Buttons - Hidden for now
                         <div className="hidden lg:flex items-center space-x-4">
                             {isAuthenticated ? (
                                 <div className="relative">
@@ -172,6 +170,7 @@ const Navbar = () => {
                                 </>
                             )}
                         </div>
+                        */}
 
                         {/* Mobile menu button */}
                         <div className="lg:hidden">
@@ -206,60 +205,6 @@ const Navbar = () => {
                                     {item.name}
                                 </button>
                             ))}
-                            <div className="pt-4 border-t border-gray-200/20 space-y-4">
-                                {isAuthenticated ? (
-                                    <>
-                                        <button
-                                            onClick={() => {
-                                                navigate('/profile');
-                                                setIsMobileMenuOpen(false);
-                                            }}
-                                            className="block w-full text-left text-gray-700 hover:text-blue-600 font-medium py-2 transition-colors duration-200"
-                                        >
-                                            Profile
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                navigate('/orders');
-                                                setIsMobileMenuOpen(false);
-                                            }}
-                                            className="block w-full text-left text-gray-700 hover:text-blue-600 font-medium py-2 transition-colors duration-200"
-                                        >
-                                            Orders
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                logout();
-                                                setIsMobileMenuOpen(false);
-                                            }}
-                                            className="block w-full text-left text-red-600 hover:text-red-700 font-medium py-2 transition-colors duration-200"
-                                        >
-                                            Logout
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button 
-                                            onClick={() => {
-                                                setShowLoginModal(true);
-                                                setIsMobileMenuOpen(false); // Close menu on modal open
-                                            }}
-                                            className="block w-full text-left text-gray-700 hover:text-blue-600 font-medium py-2 transition-colors duration-200"
-                                        >
-                                            Sign In
-                                        </button>
-                                        <button 
-                                            onClick={() => {
-                                                setShowRegisterModal(true);
-                                                setIsMobileMenuOpen(false); // Close menu on modal open
-                                            }}
-                                            className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200 w-full"
-                                        >
-                                            Sign Up
-                                        </button>
-                                    </>
-                                )}
-                            </div>
                         </div>
                     </div>
                 </div>

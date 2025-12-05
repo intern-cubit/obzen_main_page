@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, MapPin, Twitter, Linkedin, Github, Instagram } from 'lucide-react';
+import { Mail, Phone, MapPin, Linkedin, Instagram } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import logoBlack from '../../assets/images/logo-black.png';
 
@@ -16,18 +16,16 @@ const FooterApple = () => {
   ];
 
   const services = [
-    'Custom Development',
-    'AI Integration',
-    'System Integration',
-    'Security Solutions',
-    '24/7 Support'
+    'Satellite Based Location Services',
+    'Cellular Location Based Services',
+    'Inventory Tracking Solutions',
+    'High value asset monitoring solutions',
+    'Hardware-Software Design and Development'
   ];
 
   const socialLinks = [
-    { icon: <Twitter className="w-4 h-4" />, href: '#', name: 'Twitter' },
-    { icon: <Linkedin className="w-4 h-4" />, href: '#', name: 'LinkedIn' },
-    { icon: <Github className="w-4 h-4" />, href: '#', name: 'GitHub' },
-    { icon: <Instagram className="w-4 h-4" />, href: '#', name: 'Instagram' }
+    { icon: <Linkedin className="w-4 h-4" />, href: 'https://www.linkedin.com/company/obzen-technolabs/', name: 'LinkedIn' },
+    { icon: <Instagram className="w-4 h-4" />, href: 'https://www.instagram.com/obzentechnolabs/', name: 'Instagram' }
   ];
 
   const handleLinkClick = (href, isRoute = false) => {
@@ -141,7 +139,7 @@ const FooterApple = () => {
         <div className="py-4 border-t border-gray-100">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
             <div className="text-xs text-gray-500 font-light">
-              Copyright © {currentYear} CuBIT Dynamics Inc. All rights reserved.
+              Copyright © 2025 Obzen Technolabs Pvt. Ltd. All rights reserved.
             </div>
             
             <div className="flex space-x-4 text-xs">
@@ -150,9 +148,6 @@ const FooterApple = () => {
               </a>
               <a href="#" className="text-gray-500 hover:text-gray-700 transition-colors duration-200 font-light">
                 Terms of Use
-              </a>
-              <a href="#" className="text-gray-500 hover:text-gray-700 transition-colors duration-200 font-light">
-                Legal
               </a>
             </div>
           </div>

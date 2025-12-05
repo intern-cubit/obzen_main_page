@@ -109,13 +109,14 @@ const ProductsApple = () => {
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {[
-                                        { title: 'Improved Accuracy', desc: 'Intelligent architecture to reduce inconsistencies during location tracking found in conventional trackers.' },
-                                        { title: 'Stronger Reliability', desc: 'Built to remain highly functional in the even to most challenging terrains.' },
-                                        { title: 'Better Reach', desc: 'Concept includes options for both nationwide and global connectivity (based on variant).' },
-                                        { title: 'Compact & Easy to Use', desc: 'Targeting a design that fits seamlessly into everyday life.' },
-                                        { title: 'Affordable', desc: 'Our goal is to make advanced tracking accessible to families and businesses across India.' }
+                                        { title: 'Improved Accuracy', desc: 'Intelligent architecture to reduce inconsistencies during location tracking found in conventional trackers.', icon: '🎯' },
+                                        { title: 'Stronger Reliability', desc: 'Built to remain highly functional in the even to most challenging terrains.', icon: '💪' },
+                                        { title: 'Better Reach', desc: 'Concept includes options for both nationwide and global connectivity (based on variant).', icon: '🌍' },
+                                        { title: 'Compact & Easy to Use', desc: 'Targeting a design that fits seamlessly into everyday life.', icon: '✨' },
+                                        { title: 'Affordable', desc: 'Our goal is to make advanced tracking accessible to families and businesses across India.', icon: '💰' }
                                     ].map((feature, index) => (
                                         <div key={index} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+                                            <div className="text-4xl mb-4">{feature.icon}</div>
                                             <h4 className="text-lg font-medium text-gray-900 mb-3">
                                                 {feature.title}
                                             </h4>
@@ -161,18 +162,9 @@ const ProductsApple = () => {
                                 {product.title}
                             </h2>
 
-                            <p className={`text-lg sm:text-xl lg:text-2xl xl:text-3xl ${product.textColor} font-light mb-6 lg:mb-8 leading-relaxed max-w-3xl`}>
+                            <p className={`text-lg sm:text-xl lg:text-2xl xl:text-3xl ${product.textColor} font-light leading-relaxed max-w-3xl`}>
                                 {product.subtitle}
                             </p>
-
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <button className="bg-white/90 backdrop-blur-sm text-gray-900 px-6 py-3 rounded-full text-base font-normal transition-all duration-300 hover:bg-white hover:scale-105">
-                                    Learn more
-                                </button>
-                                <button className="border border-white/30 text-white px-6 py-3 rounded-full text-base font-light transition-all duration-300 hover:bg-white/10">
-                                    Buy
-                                </button>
-                            </div>
                         </div>
                     </div>
                 ))}
@@ -180,18 +172,6 @@ const ProductsApple = () => {
 
 
 
-            {/* View All Products Section */}
-            <div className="text-center mt-12 lg:mt-16">
-                <button
-                    onClick={() => navigate('/products')}
-                    className="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                >
-                    View All Products
-                </button>
-                <p className="text-gray-600 mt-4 text-sm">
-                    Explore our complete product catalog with detailed specifications
-                </p>
-            </div>
                 </>
             )}
         </div>
