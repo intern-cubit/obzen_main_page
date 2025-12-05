@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Target, Zap, Globe, Sparkles, DollarSign } from 'lucide-react';
 import { productService } from '../../services/contentService';
 import CubitrackImg from '../../assets/images/Cubitrack.jpg';
+import Celestia from '../../assets/images/Celestia.png';  
 // import { set } from 'mongoose';
 
 const ProductsApple = () => {
@@ -33,7 +35,7 @@ const ProductsApple = () => {
             id: 3,
             title: 'CubiTrack Celestia',
             subtitle: 'A premium variant engineered for specialized applications that require global connectivity and extended reach.',
-            backgroundImage: CubitrackImg,
+            backgroundImage: Celestia,
             textColor: 'text-white',
             buttonColor: 'bg-purple-600 hover:bg-purple-700',
             link: '#'
@@ -109,14 +111,14 @@ const ProductsApple = () => {
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {[
-                                        { title: 'Improved Accuracy', desc: 'Intelligent architecture to reduce inconsistencies during location tracking found in conventional trackers.', icon: '🎯' },
-                                        { title: 'Stronger Reliability', desc: 'Built to remain highly functional in the even to most challenging terrains.', icon: '💪' },
-                                        { title: 'Better Reach', desc: 'Concept includes options for both nationwide and global connectivity (based on variant).', icon: '🌍' },
-                                        { title: 'Compact & Easy to Use', desc: 'Targeting a design that fits seamlessly into everyday life.', icon: '✨' },
-                                        { title: 'Affordable', desc: 'Our goal is to make advanced tracking accessible to families and businesses across India.', icon: '💰' }
+                                        { title: 'Improved Accuracy', desc: 'Intelligent architecture to reduce inconsistencies during location tracking found in conventional trackers.', Icon: Target },
+                                        { title: 'Stronger Reliability', desc: 'Built to remain highly functional in the even to most challenging terrains.', Icon: Zap },
+                                        { title: 'Better Reach', desc: 'Concept includes options for both nationwide and global connectivity (based on variant).', Icon: Globe },
+                                        { title: 'Compact & Easy to Use', desc: 'Targeting a design that fits seamlessly into everyday life.', Icon: Sparkles },
+                                        { title: 'Affordable', desc: 'Our goal is to make advanced tracking accessible to families and businesses across India.', Icon: DollarSign }
                                     ].map((feature, index) => (
                                         <div key={index} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-                                            <div className="text-4xl mb-4">{feature.icon}</div>
+                                            <feature.Icon className="w-10 h-10 text-blue-600 mb-4" />
                                             <h4 className="text-lg font-medium text-gray-900 mb-3">
                                                 {feature.title}
                                             </h4>

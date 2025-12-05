@@ -25,7 +25,6 @@ const FooterApple = () => {
 
   const socialLinks = [
     { icon: <Linkedin className="w-4 h-4" />, href: 'https://www.linkedin.com/company/obzen-technolabs/', name: 'LinkedIn' },
-    { icon: <Instagram className="w-4 h-4" />, href: 'https://www.instagram.com/obzentechnolabs/', name: 'Instagram' }
   ];
 
   const handleLinkClick = (href, isRoute = false) => {
@@ -74,7 +73,7 @@ const FooterApple = () => {
                 <div className="flex items-start text-gray-500">
                   <MapPin className="w-3 h-3 mr-2 mt-0.5 flex-shrink-0" />
                   <span className="text-xs font-light">
-                    Bangalore, karnataka, India
+                    2nd Floor, Kailash Building, 21, Kodichikkanahalli Main Rd, above Subway, Kaveri Nagar, Bommanahalli, Bengaluru, Karnataka 560068
                   </span>
                 </div>
               </div>
@@ -143,12 +142,18 @@ const FooterApple = () => {
             </div>
             
             <div className="flex space-x-4 text-xs">
-              <a href="#" className="text-gray-500 hover:text-gray-700 transition-colors duration-200 font-light">
+              <button
+                onClick={() => handleLinkClick('/privacy-policy', true)}
+                className="text-gray-500 hover:text-gray-700 transition-colors duration-200 font-light"
+              >
                 Privacy Policy
-              </a>
-              <a href="#" className="text-gray-500 hover:text-gray-700 transition-colors duration-200 font-light">
+              </button>
+              <button
+                onClick={() => handleLinkClick('/terms', true)}
+                className="text-gray-500 hover:text-gray-700 transition-colors duration-200 font-light"
+              >
                 Terms of Use
-              </a>
+              </button>
             </div>
           </div>
         </div>

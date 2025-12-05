@@ -25,6 +25,8 @@ import MyOrdersPage from './pages/MyOrdersPage';
 import WaBombProductPage from './pages/product_pages/WaBombProductPage';
 import MailStormProductPage from './pages/product_pages/MailStormProductPage';
 import CubiViewProductPage from './pages/product_pages/CubiViewProductPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsPage from './pages/TermsPage';
 
 // Admin pages
 import AdminLogin from './components/admin/AdminLogin';
@@ -79,6 +81,8 @@ const App = () => {
                         <Route path="/checkout" element={<CheckoutPage />} />
                         <Route path="/my-software" element={<MySoftwarePage />} />
                         <Route path="/orders" element={<MyOrdersPage />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                        <Route path="/terms" element={<TermsPage />} />
                         
                         {/* Static product pages */}
                         <Route path="/products/wa-bomb" element={<WaBombProductPage />} />
