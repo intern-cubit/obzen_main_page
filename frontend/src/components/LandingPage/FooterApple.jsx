@@ -24,7 +24,8 @@ const FooterApple = () => {
   ];
 
   const socialLinks = [
-    { icon: <Linkedin className="w-4 h-4" />, href: 'https://www.linkedin.com/company/obzen-technolabs/', name: 'LinkedIn' },
+    { icon: <Linkedin className="w-4 h-4" />, href: 'https://www.linkedin.com/company/cubit-dynamics/', name: 'LinkedIn' },
+    { icon: <Instagram className="w-4 h-4" />, href: 'https://www.instagram.com/cubit_dynamics', name: 'Instagram' }
   ];
 
   const handleLinkClick = (href, isRoute = false) => {
