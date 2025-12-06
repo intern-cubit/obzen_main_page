@@ -9,8 +9,8 @@ const FooterApple = () => {
 
   const quickLinks = [
     { name: 'Home', href: '/', isRoute: true },
-    { name: 'About', href: '/about', isRoute: true },
-    { name: 'Products', href: '/products', isRoute: true },
+    { name: 'About', href: '#about', isRoute: false },
+    { name: 'Products', href: '#products', isRoute: false },
     { name: 'Services', href: '#services', isRoute: false },
     { name: 'Contact', href: '#contact', isRoute: false }
   ];
